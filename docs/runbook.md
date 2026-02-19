@@ -25,6 +25,14 @@
 - Run retention helper (dry-run, then apply) to archive older untracked runtime report files:
 	- `bash scripts/reports_retention.sh --keep 20 --dry-run`
 	- `bash scripts/reports_retention.sh --keep 20 --apply`
+- Run monthly profile concentration guardrails (using non-mutating `/tmp` reports):
+	- Generate profile snapshots:
+		- `python main.py --strategy-profile normal --lookback-days 63 --no-log --report-path /tmp/sg_trader_strategy_normal.json`
+		- `python main.py --strategy-profile defensive --lookback-days 63 --no-log --report-path /tmp/sg_trader_strategy_defensive.json`
+		- `python main.py --strategy-profile aggressive --lookback-days 63 --no-log --report-path /tmp/sg_trader_strategy_aggressive.json`
+	- Compute concentration metrics (`top3_concentration`, `effective_n = 1/sum(w^2)`) and alert if:
+		- `top3_concentration > 0.70`, or
+		- `effective_n < 4.50`
 - Record current allocation settings used in production (`--lookback-days`, `--risk-free-rate`, `--max-weight`, `--top-n`).
 - Confirm branch protection requires both checks from [.github/workflows/ci-smoke.yml](.github/workflows/ci-smoke.yml): `smoke` and `unit-gates`.
 

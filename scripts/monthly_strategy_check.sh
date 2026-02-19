@@ -13,6 +13,7 @@ CURRENT_DEFAULT="${MONTHLY_STRATEGY_CURRENT_DEFAULT:-aggressive}"
 SWITCH_CANDIDATE="${MONTHLY_STRATEGY_SWITCH_CANDIDATE:-defensive}"
 TOP3_THRESHOLD="${MONTHLY_STRATEGY_TOP3_THRESHOLD:-0.70}"
 EFFECTIVE_N_THRESHOLD="${MONTHLY_STRATEGY_EFFECTIVE_N_THRESHOLD:-4.50}"
+SOFT_FAIL_GUARDRAIL="${MONTHLY_STRATEGY_SOFT_FAIL_GUARDRAIL:-0}"
 
 if [[ -n "${PYTHON_BIN:-}" ]]; then
 	PYTHON="$PYTHON_BIN"
@@ -38,6 +39,7 @@ Options:
 	--switch-candidate PROFILE   Candidate profile for switch rule (default: defensive)
 	--top3-threshold X           Guardrail threshold (default: 0.70)
 	--effective-n-threshold X    Guardrail threshold (default: 4.50)
+	--soft-fail-guardrail        Do not fail command on guardrail breach (prints alert only)
 	-h, --help                   Show this help message
 EOF
 }
@@ -79,6 +81,10 @@ while [[ $# -gt 0 ]]; do
 		--effective-n-threshold)
 			EFFECTIVE_N_THRESHOLD="$2"
 			shift 2
+			;;
+		--soft-fail-guardrail)
+			SOFT_FAIL_GUARDRAIL=1
+			shift
 			;;
 		-h|--help)
 			usage
@@ -144,6 +150,16 @@ echo "[monthly] building decision summary"
 	--effective-n-threshold "$EFFECTIVE_N_THRESHOLD" \
 	--out-json "$OUT_DIR/monthly_strategy_summary.json" \
 	--out-md "$OUT_DIR/monthly_strategy_summary.md"
+
+GUARDRAIL_ARGS=()
+if [[ "$SOFT_FAIL_GUARDRAIL" == "1" ]]; then
+	GUARDRAIL_ARGS+=("--soft-fail")
+fi
+
+echo "[monthly] checking guardrail alerts"
+"$PYTHON" scripts/monthly_strategy_guardrail_alert.py \
+	--summary-json "$OUT_DIR/monthly_strategy_summary.json" \
+	"${GUARDRAIL_ARGS[@]}"
 
 echo "[monthly] summary files:"
 echo "- $OUT_DIR/monthly_strategy_summary.md"

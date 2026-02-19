@@ -24,10 +24,12 @@
 - Archive `reports/` outputs for the month.
 - Run monthly strategy decision pack (non-mutating; outputs to `/tmp/sg_trader_monthly` by default):
 	- `bash scripts/monthly_strategy_check.sh`
+	- Optional non-blocking mode (still prints alerts): `bash scripts/monthly_strategy_check.sh --soft-fail-guardrail`
 - Run retention helper (dry-run, then apply) to archive older untracked runtime report files:
 	- `bash scripts/reports_retention.sh --keep 20 --dry-run`
 	- `bash scripts/reports_retention.sh --keep 20 --apply`
-- In monthly decision output, alert if concentration guardrails are breached:
+- Monthly pack now fails (exit code 8) on concentration guardrail breach unless `--soft-fail-guardrail` is used.
+- Guardrail breach condition:
 	- `top3_concentration > 0.70`, or
 	- `effective_n < 4.50`
 - Record current allocation settings used in production (`--lookback-days`, `--risk-free-rate`, `--max-weight`, `--top-n`).

@@ -98,6 +98,7 @@ Selection and sizing:
 - Optionally filter by lookback drawdown ceiling (`--max-lookback-drawdown`)
 - Optionally apply soft score penalties (`--score-volatility-penalty`, `--score-drawdown-penalty`) to reduce preference for high-risk names without hard exclusion
 - Optionally apply regime-aware defensive overlay (`--regime-aware-defaults`) that can tighten effective `top_n` and `max_weight` when median volatility is elevated or median score is weak
+- Optionally apply a preset strategy profile (`--strategy-profile` in `none|normal|defensive|aggressive`) to set coherent defaults; explicit CLI flags override profile defaults
 - Keep top `N`
 - Convert positive scores to weights
 - Apply iterative max-weight cap

@@ -116,6 +116,7 @@ Control allocation inputs:
 
 ```bash
 python main.py \
+  --strategy-profile normal \
   --lookback-days 63 \
   --risk-free-rate 0.0365 \
   --min-score 0.0 \
@@ -133,6 +134,9 @@ python main.py \
   --initial-wealth 1 \
   --report-path reports/ledger_universe_allocation.json
 ```
+
+Profiles available: `none`, `normal`, `defensive`, `aggressive`.
+Explicit CLI flags override profile defaults.
 
 List extracted tradable tickers:
 

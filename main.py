@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -105,6 +106,13 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.0,
         help="Soft score penalty coefficient for lookback drawdown.",
+    )
+    parser.add_argument(
+        "--strategy-profile",
+        type=str,
+        default="none",
+        choices=["none", "normal", "defensive", "aggressive"],
+        help="Optional preset profile for allocator risk/selection controls.",
     )
     parser.add_argument(
         "--regime-aware-defaults",
@@ -609,6 +617,83 @@ def apply_regime_overlay(
     return effective_top_n, effective_max_weight, regime_payload
 
 
+def _provided_cli_flags(argv: list[str]) -> set[str]:
+    flags: set[str] = set()
+    for token in argv:
+        if not token.startswith("--"):
+            continue
+        name = token.split("=", 1)[0]
+        flags.add(name)
+    return flags
+
+
+def _strategy_profile_defaults(profile: str) -> dict[str, Any]:
+    if profile == "normal":
+        return {
+            "min_score": 0.0,
+            "max_annualized_volatility": 0.35,
+            "max_lookback_drawdown": 0.30,
+            "score_volatility_penalty": 0.5,
+            "score_drawdown_penalty": 1.0,
+            "regime_aware_defaults": True,
+            "regime_defensive_top_n": 6,
+            "regime_defensive_max_weight": 0.20,
+        }
+    if profile == "defensive":
+        return {
+            "top_n": 8,
+            "max_weight": 0.25,
+            "min_score": 0.0,
+            "max_annualized_volatility": 0.28,
+            "max_lookback_drawdown": 0.20,
+            "score_volatility_penalty": 0.8,
+            "score_drawdown_penalty": 1.4,
+            "regime_aware_defaults": True,
+            "regime_volatility_threshold": 0.25,
+            "regime_score_threshold": 0.05,
+            "regime_defensive_top_n": 5,
+            "regime_defensive_max_weight": 0.18,
+        }
+    if profile == "aggressive":
+        return {
+            "top_n": 12,
+            "max_weight": 0.35,
+            "min_score": -0.10,
+            "max_annualized_volatility": 0.50,
+            "max_lookback_drawdown": 0.45,
+            "score_volatility_penalty": 0.25,
+            "score_drawdown_penalty": 0.5,
+            "regime_aware_defaults": True,
+            "regime_volatility_threshold": 0.35,
+            "regime_score_threshold": -0.05,
+            "regime_defensive_top_n": 8,
+            "regime_defensive_max_weight": 0.25,
+        }
+    return {}
+
+
+def apply_strategy_profile(
+    args: argparse.Namespace,
+    *,
+    provided_flags: set[str],
+) -> dict[str, Any]:
+    profile = args.strategy_profile
+    defaults = _strategy_profile_defaults(profile)
+    applied: dict[str, Any] = {}
+
+    for arg_name, value in defaults.items():
+        flag_name = "--" + arg_name.replace("_", "-")
+        if flag_name in provided_flags:
+            continue
+        setattr(args, arg_name, value)
+        applied[arg_name] = value
+
+    return {
+        "profile": profile,
+        "applied_overrides": applied,
+    }
+
+
 def write_report(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -688,6 +773,7 @@ def _cli_capabilities_payload() -> dict[str, Any]:
                     "--max-lookback-drawdown",
                     "--score-volatility-penalty",
                     "--score-drawdown-penalty",
+                    "--strategy-profile",
                     "--regime-aware-defaults",
                     "--regime-volatility-threshold",
                     "--regime-score-threshold",
@@ -774,6 +860,7 @@ def _cli_capabilities_payload() -> dict[str, Any]:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    provided_flags = _provided_cli_flags(sys.argv[1:])
 
     if args.version:
         print(CLI_VERSION)
@@ -784,6 +871,8 @@ def main() -> int:
 
     cfg = load_config()
     cfg.log_file = str(args.ledger_path)
+
+    profile_info = apply_strategy_profile(args, provided_flags=provided_flags)
 
     if args.healthcheck or args.healthcheck_json:
         health = _run_healthcheck(args.ledger_path, Path(cfg.cache_dir))
@@ -1258,6 +1347,7 @@ def main() -> int:
             "score_drawdown_penalty": args.score_drawdown_penalty,
             "candidates_after_filters": len(filtered_metrics),
         },
+        "strategy_profile": profile_info,
         "regime": regime_info,
         "allocations": allocations,
     }

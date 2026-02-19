@@ -137,6 +137,7 @@ python main.py \
 ```
 
 Profiles available: `none`, `normal`, `defensive`, `aggressive`.
+`STRATEGY_PROFILE_DEFAULT` sets the default profile only when `--strategy-profile` is not provided.
 Explicit CLI flags override profile defaults.
 
 List extracted tradable tickers:

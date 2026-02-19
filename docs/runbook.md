@@ -3,6 +3,7 @@
 ## Daily
 
 - Run `python main.py` (or scheduler) to produce the latest ledger-native allocation proposal.
+- If using `STRATEGY_PROFILE_DEFAULT` in `.env`, remember CLI `--strategy-profile` takes precedence when explicitly provided.
 - Run `python main.py --healthcheck` before market open for environment sanity.
 - Confirm `reports/ledger_universe_allocation.json` is refreshed.
 - Spot-check extracted universe with `python main.py --list-tickers`.

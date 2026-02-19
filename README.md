@@ -361,6 +361,7 @@ This is a decision-support tool. It does not place trades automatically.
 ## Governance
 
 See the governance checklist in [docs/governance_checklist.md](docs/governance_checklist.md).
+Release checklist: [docs/release_checklist.md](docs/release_checklist.md)
 
 Operational runbook: [docs/runbook.md](docs/runbook.md)
 Strategy comparison summary: [docs/strategy_comparison.md](docs/strategy_comparison.md)

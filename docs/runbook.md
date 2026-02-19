@@ -18,6 +18,7 @@
 ## Monthly
 
 - Run the governance checklist in [docs/governance_checklist.md](docs/governance_checklist.md).
+- Run the release checklist in [docs/release_checklist.md](docs/release_checklist.md) before major merges/promotions.
 - Archive `reports/` outputs for the month.
 - Record current allocation settings used in production (`--lookback-days`, `--risk-free-rate`, `--max-weight`, `--top-n`).
 - Confirm branch protection requires both checks from [.github/workflows/ci-smoke.yml](.github/workflows/ci-smoke.yml): `smoke` and `unit-gates`.

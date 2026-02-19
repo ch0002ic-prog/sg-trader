@@ -321,6 +321,13 @@ python scripts/print_ci_artifact_summary.py \
   --local-ci-path reports/local_ci_result.json
 ```
 
+Archive older untracked runtime report artifacts (safe retention, dry-run by default):
+
+```bash
+bash scripts/reports_retention.sh --keep 20 --dry-run
+bash scripts/reports_retention.sh --keep 20 --apply
+```
+
 Run walk-forward profile scan (strategy tuning):
 
 ```bash

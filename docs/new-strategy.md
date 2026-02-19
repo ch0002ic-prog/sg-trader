@@ -99,6 +99,7 @@ Selection and sizing:
 - Optionally apply soft score penalties (`--score-volatility-penalty`, `--score-drawdown-penalty`) to reduce preference for high-risk names without hard exclusion
 - Optionally apply regime-aware defensive overlay (`--regime-aware-defaults`) that can tighten effective `top_n` and `max_weight` when median volatility is elevated or median score is weak
 - Optionally apply a preset strategy profile (`--strategy-profile` in `none|normal|defensive|aggressive`) to set coherent defaults; explicit CLI flags override profile defaults
+- Optional environment fallback `STRATEGY_PROFILE_DEFAULT` is used only when `--strategy-profile` is not explicitly provided
 - Keep top `N`
 - Convert positive scores to weights
 - Apply iterative max-weight cap
@@ -172,13 +173,11 @@ python scripts/walkforward_profile_scan.py \
 ```
 
 Observed ranking from generated summary artifacts (`reports/walkforward_profile_scan.*`):
-- `aggressive`: avg forward return 0.00919, median 0.00737, win rate 70%
-- `defensive`: avg forward return 0.00764, median 0.00553, win rate 70%
-- `normal`: avg forward return 0.00684, median 0.00465, win rate 70%
+- `aggressive` leads `defensive`, which leads `normal` on average forward return in this snapshot
 
 Current recommendation (evidence-based, subject to periodic re-scan):
 - Use `--strategy-profile aggressive` as default for now.
-- Optional runtime default without CLI flag: set `STRATEGY_PROFILE_DEFAULT=aggressive` in environment/.env.
+- Optional runtime default without CLI flag: set `STRATEGY_PROFILE_DEFAULT=aggressive` in environment/.env (CLI `--strategy-profile` still takes precedence).
 - Re-run the same scan periodically to confirm ranking stability before changing defaults.
 
 This strategy spec intentionally does not duplicate CI workflow wiring details.

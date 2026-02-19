@@ -33,6 +33,14 @@ Use this checklist before merging or promoting changes to production-adjacent us
 - Confirm no secrets are committed.
 - Confirm rollback path is clear (revert commit or rollback to previous known-good tag/commit).
 
+## Versioning and Tagging
+
+- Use calendar-based release tags: `vYYYY.MM.x` (example: `v2026.02.1`).
+- Create annotated tags for release points:
+  - `git tag -a v2026.02.1 -m "Release v2026.02.1"`
+  - `git push origin v2026.02.1`
+- Keep tag notes aligned with the release intent (strategy change, docs-only, or ops hardening).
+
 ## Post-Release Verification
 
 - Run `python main.py --healthcheck`.

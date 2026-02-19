@@ -101,6 +101,11 @@ Selection and sizing:
 
 ## Execution Governance
 
+### Plan Generation
+
+`--execution-plan` creates a signed execution-plan artifact under `reports/execution_plans/`.
+The plan includes `plan_hash` used by approval and replay validation.
+
 ### Plan Approval
 
 `--execution-approve` validates plan payload and hash, then writes approval artifact.
@@ -133,9 +138,12 @@ For operational health checks, CI wrappers, machine-readable endpoints, and diag
 
 Core artifacts:
 - `reports/ledger_universe_allocation.json`
+- `reports/execution_plans/execution_plan_<id>.json`
 - `reports/execution_plans/execution_approval_<id>.json`
 - `reports/portfolio_dashboard_all.json`
 - `reports/portfolio_dashboard_all.md`
+- `reports/portfolio_dashboard_all.csv`
+- `reports/portfolio_dashboard_all_correlations.csv`
 
 ## Validation Baseline
 

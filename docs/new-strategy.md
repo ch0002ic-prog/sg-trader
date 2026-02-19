@@ -162,23 +162,47 @@ Optional strategy tuning support:
 
 ## Current Tuning Snapshot (2026-02-19)
 
-Broader walk-forward scan (10 windows):
+Multi-lookback walk-forward scans (10 windows each):
 
 ```bash
+# 63-day lookback
 python scripts/walkforward_profile_scan.py \
 	--profiles normal,defensive,aggressive \
 	--lookback-days 63 \
 	--forward-days 21 \
 	--windows 10
+
+# 126-day lookback
+python scripts/walkforward_profile_scan.py \
+	--profiles normal,defensive,aggressive \
+	--lookback-days 126 \
+	--forward-days 21 \
+	--windows 10 \
+	--out-csv reports/walkforward_profile_scan_lb126.csv \
+	--out-md reports/walkforward_profile_scan_lb126.md \
+	--out-detail-csv reports/walkforward_profile_scan_lb126_detail.csv
+
+# 252-day lookback
+python scripts/walkforward_profile_scan.py \
+	--profiles normal,defensive,aggressive \
+	--lookback-days 252 \
+	--forward-days 21 \
+	--windows 10 \
+	--out-csv reports/walkforward_profile_scan_lb252.csv \
+	--out-md reports/walkforward_profile_scan_lb252.md \
+	--out-detail-csv reports/walkforward_profile_scan_lb252_detail.csv
 ```
 
-Observed ranking from generated summary artifacts (`reports/walkforward_profile_scan.*`):
-- `aggressive` leads `defensive`, which leads `normal` on average forward return in this snapshot
+Observed ranking summary:
+- 63-day: `aggressive` > `defensive` > `normal`
+- 126-day: `defensive` > `normal` > `aggressive`
+- 252-day: `aggressive` > `normal` > `defensive`
+- Stability points (3/2/1 by average-return rank): `aggressive=7`, `defensive=6`, `normal=5`
 
 Current recommendation (evidence-based, subject to periodic re-scan):
-- Use `--strategy-profile aggressive` as default for now.
+- Keep `--strategy-profile aggressive` as default for now.
 - Optional runtime default without CLI flag: set `STRATEGY_PROFILE_DEFAULT=aggressive` in environment/.env (CLI `--strategy-profile` still takes precedence).
-- Re-run the same scan periodically to confirm ranking stability before changing defaults.
+- Switch rule: change default to `defensive` only if two consecutive scheduled scans show `defensive` leading both 63-day and 126-day lookbacks.
 
 This strategy spec intentionally does not duplicate CI workflow wiring details.
 For CI diagnostics/summary behavior, refer to `README.md` and `docs/runbook.md`.

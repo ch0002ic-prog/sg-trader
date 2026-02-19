@@ -76,6 +76,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum number of tickers retained after scoring.",
     )
     parser.add_argument(
+        "--min-score",
+        type=float,
+        default=None,
+        help="Optional minimum risk-adjusted score required for selection.",
+    )
+    parser.add_argument(
+        "--max-annualized-volatility",
+        type=float,
+        default=None,
+        help="Optional maximum annualized volatility allowed for selection.",
+    )
+    parser.add_argument(
         "--initial-wealth",
         type=float,
         default=1.0,
@@ -458,6 +470,24 @@ def capped_weights(scores: list[float], max_weight: float) -> list[float]:
     return [float(value) for value in normalized]
 
 
+def apply_strategy_filters(
+    metrics: list[TickerMetrics],
+    *,
+    min_score: float | None,
+    max_annualized_volatility: float | None,
+) -> list[TickerMetrics]:
+    filtered = metrics
+    if min_score is not None:
+        filtered = [item for item in filtered if item.score >= min_score]
+    if max_annualized_volatility is not None:
+        filtered = [
+            item
+            for item in filtered
+            if item.annualized_volatility <= max_annualized_volatility
+        ]
+    return filtered
+
+
 def write_report(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -532,6 +562,8 @@ def _cli_capabilities_payload() -> dict[str, Any]:
                     "--risk-free-rate",
                     "--max-weight",
                     "--top-n",
+                    "--min-score",
+                    "--max-annualized-volatility",
                     "--initial-wealth",
                     "--report-path",
                     "--no-log",
@@ -958,6 +990,9 @@ def main() -> int:
     if args.top_n < 1:
         print("top-n must be at least 1")
         return 2
+    if args.max_annualized_volatility is not None and args.max_annualized_volatility <= 0:
+        print("max-annualized-volatility must be positive")
+        return 2
     if not (0 < args.max_weight <= 1):
         print("max-weight must be in (0, 1]")
         return 2
@@ -989,7 +1024,20 @@ def main() -> int:
         print("No ticker metrics computed (missing data or insufficient lookback window).")
         return 4
 
-    selected = metrics[: args.top_n]
+    filtered_metrics = apply_strategy_filters(
+        metrics,
+        min_score=args.min_score,
+        max_annualized_volatility=args.max_annualized_volatility,
+    )
+
+    if not filtered_metrics:
+        print(
+            "No ticker metrics remain after strategy filters "
+            "(min-score/max-annualized-volatility)."
+        )
+        return 4
+
+    selected = filtered_metrics[: args.top_n]
     weights = capped_weights([item.score for item in selected], args.max_weight)
 
     allocations = []
@@ -1015,6 +1063,11 @@ def main() -> int:
         "max_weight": args.max_weight,
         "initial_wealth": args.initial_wealth,
         "top_n": args.top_n,
+        "filters": {
+            "min_score": args.min_score,
+            "max_annualized_volatility": args.max_annualized_volatility,
+            "candidates_after_filters": len(filtered_metrics),
+        },
         "allocations": allocations,
     }
     write_report(args.report_path, report)

@@ -93,6 +93,8 @@ where:
 
 Selection and sizing:
 - Rank tickers by score descending
+- Optionally filter by minimum score (`--min-score`)
+- Optionally filter by volatility ceiling (`--max-annualized-volatility`)
 - Keep top `N`
 - Convert positive scores to weights
 - Apply iterative max-weight cap

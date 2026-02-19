@@ -118,6 +118,8 @@ Control allocation inputs:
 python main.py \
   --lookback-days 63 \
   --risk-free-rate 0.0365 \
+  --min-score 0.0 \
+  --max-annualized-volatility 0.35 \
   --max-weight 0.30 \
   --top-n 10 \
   --initial-wealth 1 \

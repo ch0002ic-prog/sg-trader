@@ -20,6 +20,7 @@ fi
 "$PYTHON" -m unittest \
   tests.test_healthcheck \
   tests.test_cli_capabilities \
+  tests.test_strategy_filters \
   tests.test_local_ci_cli_args \
   tests.test_local_ci_parse \
   tests.test_print_ci_artifact_summary \

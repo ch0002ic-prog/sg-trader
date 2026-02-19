@@ -1,0 +1,7 @@
+# Default owner for all files
+* @ch0002ic-prog
+
+# Critical governance and automation surfaces
+/.github/workflows/ @ch0002ic-prog
+/docs/ @ch0002ic-prog
+/scripts/ @ch0002ic-prog

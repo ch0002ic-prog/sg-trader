@@ -36,6 +36,7 @@ class TickerMetrics:
     price: float
     lookback_return: float
     annualized_volatility: float
+    max_lookback_drawdown: float
     score: float
 
 
@@ -86,6 +87,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="Optional maximum annualized volatility allowed for selection.",
+    )
+    parser.add_argument(
+        "--max-lookback-drawdown",
+        type=float,
+        default=None,
+        help="Optional maximum absolute drawdown over lookback window (0-1).",
     )
     parser.add_argument(
         "--initial-wealth",
@@ -412,6 +419,10 @@ def compute_metrics(
         if returns.empty:
             continue
 
+        running_max = window.cummax()
+        drawdown_series = (window / running_max) - 1.0
+        max_lookback_drawdown = float(abs(drawdown_series.min()))
+
         lookback_return = float((window.iloc[-1] / window.iloc[0]) - 1.0)
         annualized_vol = float(returns.std(ddof=1) * np.sqrt(252))
         if not np.isfinite(annualized_vol):
@@ -426,6 +437,7 @@ def compute_metrics(
                 price=float(window.iloc[-1]),
                 lookback_return=lookback_return,
                 annualized_volatility=annualized_vol,
+                max_lookback_drawdown=max_lookback_drawdown,
                 score=float(score),
             )
         )
@@ -475,6 +487,7 @@ def apply_strategy_filters(
     *,
     min_score: float | None,
     max_annualized_volatility: float | None,
+    max_lookback_drawdown: float | None,
 ) -> list[TickerMetrics]:
     filtered = metrics
     if min_score is not None:
@@ -484,6 +497,10 @@ def apply_strategy_filters(
             item
             for item in filtered
             if item.annualized_volatility <= max_annualized_volatility
+        ]
+    if max_lookback_drawdown is not None:
+        filtered = [
+            item for item in filtered if item.max_lookback_drawdown <= max_lookback_drawdown
         ]
     return filtered
 
@@ -564,6 +581,7 @@ def _cli_capabilities_payload() -> dict[str, Any]:
                     "--top-n",
                     "--min-score",
                     "--max-annualized-volatility",
+                    "--max-lookback-drawdown",
                     "--initial-wealth",
                     "--report-path",
                     "--no-log",
@@ -993,6 +1011,9 @@ def main() -> int:
     if args.max_annualized_volatility is not None and args.max_annualized_volatility <= 0:
         print("max-annualized-volatility must be positive")
         return 2
+    if args.max_lookback_drawdown is not None and not (0 < args.max_lookback_drawdown <= 1):
+        print("max-lookback-drawdown must be in (0, 1]")
+        return 2
     if not (0 < args.max_weight <= 1):
         print("max-weight must be in (0, 1]")
         return 2
@@ -1028,12 +1049,13 @@ def main() -> int:
         metrics,
         min_score=args.min_score,
         max_annualized_volatility=args.max_annualized_volatility,
+        max_lookback_drawdown=args.max_lookback_drawdown,
     )
 
     if not filtered_metrics:
         print(
             "No ticker metrics remain after strategy filters "
-            "(min-score/max-annualized-volatility)."
+            "(min-score/max-annualized-volatility/max-lookback-drawdown)."
         )
         return 4
 
@@ -1049,6 +1071,7 @@ def main() -> int:
                 "score": item.score,
                 "lookback_return": item.lookback_return,
                 "annualized_volatility": item.annualized_volatility,
+                "max_lookback_drawdown": item.max_lookback_drawdown,
                 "weight": weight,
                 "allocation": float(weight * args.initial_wealth),
             }
@@ -1066,6 +1089,7 @@ def main() -> int:
         "filters": {
             "min_score": args.min_score,
             "max_annualized_volatility": args.max_annualized_volatility,
+            "max_lookback_drawdown": args.max_lookback_drawdown,
             "candidates_after_filters": len(filtered_metrics),
         },
         "allocations": allocations,

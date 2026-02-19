@@ -1,6 +1,7 @@
 # sg-trader
 
 ![ci-smoke](https://github.com/ch0002ic-prog/sg-trader/actions/workflows/ci-smoke.yml/badge.svg)
+![weekly-walkforward](https://github.com/ch0002ic-prog/sg-trader/actions/workflows/weekly-walkforward.yml/badge.svg)
 
 Decision-support engine for the ergodic barbell strategy. This project fetches market data, computes signals, and logs compliance-friendly entries. Execution remains manual.
 

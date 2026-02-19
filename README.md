@@ -6,6 +6,15 @@ Replace `OWNER/REPO` with your GitHub org/repo to activate the badge.
 
 Decision-support engine for the ergodic barbell strategy. This project fetches market data, computes signals, and logs compliance-friendly entries. Execution remains manual.
 
+## Architecture
+
+- `main.py` is the single CLI entry point for allocation runs, execution governance (`plan`/`approve`/`replay`), dashboard generation, and health/discovery probes.
+- `fortress_alpha_ledger.json` is the only source of ticker universe truth for strategy runtime.
+- `sg_trader/` contains domain modules for config, market data/signal utilities, execution adapters, logging, and dashboard/report helpers.
+- `reports/` stores generated artifacts (allocation reports, execution plans/approvals, dashboard outputs, CI diagnostics JSON).
+- `scripts/` contains operator/CI wrappers (`ci_smoke`, `unit_gates`, `local_ci`) and parsers/summarizers used in automation.
+- `.github/workflows/ci-smoke.yml` runs two required checks: `smoke` and `unit-gates`.
+
 ## Setup
 
 1. Create/activate your virtual environment:

@@ -95,6 +95,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional maximum absolute drawdown over lookback window (0-1).",
     )
     parser.add_argument(
+        "--score-volatility-penalty",
+        type=float,
+        default=0.0,
+        help="Soft score penalty coefficient for annualized volatility.",
+    )
+    parser.add_argument(
+        "--score-drawdown-penalty",
+        type=float,
+        default=0.0,
+        help="Soft score penalty coefficient for lookback drawdown.",
+    )
+    parser.add_argument(
         "--regime-aware-defaults",
         action="store_true",
         help="Enable defensive regime overlay that can tighten top-n and max-weight.",
@@ -534,6 +546,19 @@ def apply_strategy_filters(
     return filtered
 
 
+def selection_score(
+    item: TickerMetrics,
+    *,
+    score_volatility_penalty: float,
+    score_drawdown_penalty: float,
+) -> float:
+    return float(
+        item.score
+        - (score_volatility_penalty * item.annualized_volatility)
+        - (score_drawdown_penalty * item.max_lookback_drawdown)
+    )
+
+
 def apply_regime_overlay(
     *,
     metrics: list[TickerMetrics],
@@ -661,6 +686,8 @@ def _cli_capabilities_payload() -> dict[str, Any]:
                     "--min-score",
                     "--max-annualized-volatility",
                     "--max-lookback-drawdown",
+                    "--score-volatility-penalty",
+                    "--score-drawdown-penalty",
                     "--regime-aware-defaults",
                     "--regime-volatility-threshold",
                     "--regime-score-threshold",
@@ -1098,6 +1125,12 @@ def main() -> int:
     if args.max_lookback_drawdown is not None and not (0 < args.max_lookback_drawdown <= 1):
         print("max-lookback-drawdown must be in (0, 1]")
         return 2
+    if args.score_volatility_penalty < 0:
+        print("score-volatility-penalty must be non-negative")
+        return 2
+    if args.score_drawdown_penalty < 0:
+        print("score-drawdown-penalty must be non-negative")
+        return 2
     if args.regime_volatility_threshold <= 0:
         print("regime-volatility-threshold must be positive")
         return 2
@@ -1163,8 +1196,28 @@ def main() -> int:
         regime_defensive_max_weight=args.regime_defensive_max_weight,
     )
 
-    selected = filtered_metrics[:effective_top_n]
-    weights = capped_weights([item.score for item in selected], effective_max_weight)
+    ranked_metrics = sorted(
+        filtered_metrics,
+        key=lambda item: selection_score(
+            item,
+            score_volatility_penalty=args.score_volatility_penalty,
+            score_drawdown_penalty=args.score_drawdown_penalty,
+        ),
+        reverse=True,
+    )
+
+    selected = ranked_metrics[:effective_top_n]
+    weights = capped_weights(
+        [
+            selection_score(
+                item,
+                score_volatility_penalty=args.score_volatility_penalty,
+                score_drawdown_penalty=args.score_drawdown_penalty,
+            )
+            for item in selected
+        ],
+        effective_max_weight,
+    )
 
     allocations = []
     for item, weight in zip(selected, weights):
@@ -1173,6 +1226,11 @@ def main() -> int:
                 "ticker": item.ticker,
                 "price": item.price,
                 "score": item.score,
+                "selection_score": selection_score(
+                    item,
+                    score_volatility_penalty=args.score_volatility_penalty,
+                    score_drawdown_penalty=args.score_drawdown_penalty,
+                ),
                 "lookback_return": item.lookback_return,
                 "annualized_volatility": item.annualized_volatility,
                 "max_lookback_drawdown": item.max_lookback_drawdown,
@@ -1196,6 +1254,8 @@ def main() -> int:
             "min_score": args.min_score,
             "max_annualized_volatility": args.max_annualized_volatility,
             "max_lookback_drawdown": args.max_lookback_drawdown,
+            "score_volatility_penalty": args.score_volatility_penalty,
+            "score_drawdown_penalty": args.score_drawdown_penalty,
             "candidates_after_filters": len(filtered_metrics),
         },
         "regime": regime_info,

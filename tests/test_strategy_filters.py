@@ -1,6 +1,6 @@
 import unittest
 
-from main import TickerMetrics, apply_strategy_filters
+from main import TickerMetrics, apply_strategy_filters, selection_score
 
 
 class StrategyFilterTests(unittest.TestCase):
@@ -64,6 +64,31 @@ class StrategyFilterTests(unittest.TestCase):
         )
 
         self.assertEqual([item.ticker for item in filtered], ["AAA"])
+
+    def test_selection_score_penalizes_volatility_and_drawdown(self) -> None:
+        item = TickerMetrics("AAA", 1.0, 0.1, 0.20, 0.25, 1.0)
+        value = selection_score(
+            item,
+            score_volatility_penalty=1.0,
+            score_drawdown_penalty=2.0,
+        )
+        self.assertAlmostEqual(value, 0.30)
+
+    def test_selection_score_can_change_ranking(self) -> None:
+        metrics = [
+            TickerMetrics("AAA", 1.0, 0.1, 0.50, 0.40, 1.00),
+            TickerMetrics("BBB", 1.0, 0.1, 0.10, 0.05, 0.80),
+        ]
+        ranked = sorted(
+            metrics,
+            key=lambda item: selection_score(
+                item,
+                score_volatility_penalty=1.0,
+                score_drawdown_penalty=0.5,
+            ),
+            reverse=True,
+        )
+        self.assertEqual([item.ticker for item in ranked], ["BBB", "AAA"])
 
 
 if __name__ == "__main__":

@@ -121,6 +121,8 @@ python main.py \
   --min-score 0.0 \
   --max-annualized-volatility 0.35 \
   --max-lookback-drawdown 0.25 \
+  --score-volatility-penalty 0.5 \
+  --score-drawdown-penalty 1.0 \
   --regime-aware-defaults \
   --regime-volatility-threshold 0.30 \
   --regime-score-threshold 0.0 \

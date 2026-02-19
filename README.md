@@ -244,14 +244,14 @@ CI gate (focused execution workflow checks):
 bash scripts/unit_gates.sh
 ```
 
-In GitHub Actions, `unit-gates` also emits `reports/local_ci_result.json` via:
+In GitHub Actions, `unit-gates` emits `reports/local_ci_result.json` (uploaded as artifact `local-ci-diagnostics`) via:
 
 ```bash
 bash scripts/local_ci.sh --strict --json > reports/local_ci_result.json
 python scripts/local_ci_parse.py --input reports/local_ci_result.json
 ```
 
-`unit-gates` also prints a one-line combined artifact summary in the Actions log:
+`unit-gates` also prints a one-line combined artifact summary in the Actions log (using `reports/ci_smoke_summary.json` and `reports/local_ci_result.json`):
 
 ```bash
 python scripts/print_ci_artifact_summary.py \

@@ -46,6 +46,7 @@
 - Parse machine-readable summary to compact status text:
 	- `bash scripts/local_ci.sh --strict --json | python scripts/local_ci_parse.py`
 - In GitHub Actions (`unit-gates`), diagnostics payload is saved as `reports/local_ci_result.json` and uploaded as artifact `local-ci-diagnostics`.
+- In GitHub Actions (`smoke`), smoke payload is saved as `reports/ci_smoke_summary.json` and uploaded as artifact `ci-smoke-summary`.
 - Summarize both artifacts in one line:
 	- `python scripts/print_ci_artifact_summary.py --smoke-path reports/ci_smoke_summary.json --local-ci-path reports/local_ci_result.json`
 - `unit-gates` prints this combined summary line directly in the workflow log for quick triage.

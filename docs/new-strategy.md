@@ -20,18 +20,7 @@ python main.py --execution-approve <plan_id_or_path> --execution-approve-reason 
 python main.py --execution-replay <plan_id_or_path> --paper-seed 1
 ```
 
-Automation helper:
-
-```bash
-PLAN_ID=$(python main.py --execution-plan --execution-broker paper --paper-symbol SPX_PUT --paper-side SELL --paper-qty 1 --paper-reference-price 1.25 --execution-plan-id-only)
-APPROVED_ID=$(python main.py --execution-approve "$PLAN_ID" --execution-approve-reason "reviewed" --execution-approve-id-only)
-
-# One-command CI sanity
-python main.py --execution-ci-smoke --execution-broker paper --paper-symbol SPX_PUT --paper-side SELL --paper-qty 1 --paper-reference-price 1.25 --paper-seed 1
-
-# Replay JSON payload for automation
-python main.py --execution-replay <plan_id_or_path> --execution-replay-json --paper-seed 1
-```
+For CI automation wrappers and machine-readable command flows, see `README.md` and `docs/runbook.md`.
 
 ## Purpose
 
@@ -129,15 +118,16 @@ Selection and sizing:
 
 Replay outputs execution summary to console and uses existing broker abstractions.
 
-## Operational Commands (Current)
+## Strategy-Critical Commands
 
-- Default allocation run: `python main.py`
-- List tradable tickers: `python main.py --list-tickers`
-- Include synthetic symbols: `python main.py --list-tickers --include-synthetic`
-- List brokers: `python main.py --list-brokers`
-- Approve plan: `python main.py --execution-approve <plan_id_or_path>`
-- Replay approved plan: `python main.py --execution-replay <plan_id_or_path> --paper-seed 1`
-- Portfolio dashboard: `python main.py --portfolio-dashboard`
+- Run allocation: `python main.py`
+- Inspect ledger-derived tradable universe: `python main.py --list-tickers`
+- Generate execution plan: `python main.py --execution-plan --execution-broker paper --paper-symbol SPX_PUT --paper-side SELL --paper-qty 1 --paper-reference-price 1.25`
+- Approve plan: `python main.py --execution-approve <plan_id_or_path> --execution-approve-reason "reviewed"`
+- Replay approved plan deterministically: `python main.py --execution-replay <plan_id_or_path> --paper-seed 1`
+- Generate portfolio dashboard: `python main.py --portfolio-dashboard`
+
+For operational health checks, CI wrappers, machine-readable endpoints, and diagnostics commands, refer to `README.md` and `docs/runbook.md`.
 
 ## Outputs
 
@@ -149,10 +139,11 @@ Core artifacts:
 
 ## Validation Baseline
 
-Regression tests to keep green:
-- `tests.test_list_brokers`
-- `tests.test_execution_replay`
-- `tests.test_portfolio_dashboard_skip_recent_cli`
+Operational baseline to keep green:
+- `bash scripts/unit_gates.sh`
+
+This strategy spec intentionally does not duplicate CI workflow wiring details.
+For CI diagnostics/summary behavior, refer to `README.md` and `docs/runbook.md`.
 
 ## Risk Notes
 

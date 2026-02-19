@@ -319,6 +319,16 @@ python scripts/print_ci_artifact_summary.py \
   --local-ci-path reports/local_ci_result.json
 ```
 
+Run walk-forward profile scan (strategy tuning):
+
+```bash
+python scripts/walkforward_profile_scan.py \
+  --profiles normal,defensive,aggressive \
+  --lookback-days 63 \
+  --forward-days 21 \
+  --windows 6
+```
+
 Optional environment overrides:
 
 ```bash

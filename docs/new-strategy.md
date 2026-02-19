@@ -156,6 +156,9 @@ Core artifacts:
 Operational baseline to keep green:
 - `bash scripts/unit_gates.sh`
 
+Optional strategy tuning support:
+- `python scripts/walkforward_profile_scan.py --profiles normal,defensive,aggressive --lookback-days 63 --forward-days 21 --windows 6`
+
 This strategy spec intentionally does not duplicate CI workflow wiring details.
 For CI diagnostics/summary behavior, refer to `README.md` and `docs/runbook.md`.
 

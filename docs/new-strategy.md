@@ -96,6 +96,7 @@ Selection and sizing:
 - Optionally filter by minimum score (`--min-score`)
 - Optionally filter by volatility ceiling (`--max-annualized-volatility`)
 - Optionally filter by lookback drawdown ceiling (`--max-lookback-drawdown`)
+- Optionally apply regime-aware defensive overlay (`--regime-aware-defaults`) that can tighten effective `top_n` and `max_weight` when median volatility is elevated or median score is weak
 - Keep top `N`
 - Convert positive scores to weights
 - Apply iterative max-weight cap

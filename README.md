@@ -121,6 +121,11 @@ python main.py \
   --min-score 0.0 \
   --max-annualized-volatility 0.35 \
   --max-lookback-drawdown 0.25 \
+  --regime-aware-defaults \
+  --regime-volatility-threshold 0.30 \
+  --regime-score-threshold 0.0 \
+  --regime-defensive-top-n 6 \
+  --regime-defensive-max-weight 0.20 \
   --max-weight 0.30 \
   --top-n 10 \
   --initial-wealth 1 \

@@ -95,6 +95,35 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional maximum absolute drawdown over lookback window (0-1).",
     )
     parser.add_argument(
+        "--regime-aware-defaults",
+        action="store_true",
+        help="Enable defensive regime overlay that can tighten top-n and max-weight.",
+    )
+    parser.add_argument(
+        "--regime-volatility-threshold",
+        type=float,
+        default=0.30,
+        help="Defensive regime trigger: median annualized volatility >= threshold.",
+    )
+    parser.add_argument(
+        "--regime-score-threshold",
+        type=float,
+        default=0.0,
+        help="Defensive regime trigger: median score <= threshold.",
+    )
+    parser.add_argument(
+        "--regime-defensive-top-n",
+        type=int,
+        default=6,
+        help="Top-n cap applied when defensive regime is active.",
+    )
+    parser.add_argument(
+        "--regime-defensive-max-weight",
+        type=float,
+        default=0.20,
+        help="Max-weight cap applied when defensive regime is active.",
+    )
+    parser.add_argument(
         "--initial-wealth",
         type=float,
         default=1.0,
@@ -505,6 +534,56 @@ def apply_strategy_filters(
     return filtered
 
 
+def apply_regime_overlay(
+    *,
+    metrics: list[TickerMetrics],
+    base_top_n: int,
+    base_max_weight: float,
+    regime_aware_defaults: bool,
+    regime_volatility_threshold: float,
+    regime_score_threshold: float,
+    regime_defensive_top_n: int,
+    regime_defensive_max_weight: float,
+) -> tuple[int, float, dict[str, Any]]:
+    if not metrics:
+        return base_top_n, base_max_weight, {
+            "enabled": regime_aware_defaults,
+            "regime": "insufficient_data",
+            "defensive": False,
+            "median_annualized_volatility": None,
+            "median_score": None,
+        }
+
+    median_volatility = float(np.median([item.annualized_volatility for item in metrics]))
+    median_score = float(np.median([item.score for item in metrics]))
+
+    defensive = (
+        median_volatility >= regime_volatility_threshold
+        or median_score <= regime_score_threshold
+    )
+    effective_top_n = base_top_n
+    effective_max_weight = base_max_weight
+
+    if regime_aware_defaults and defensive:
+        effective_top_n = min(base_top_n, regime_defensive_top_n)
+        effective_max_weight = min(base_max_weight, regime_defensive_max_weight)
+
+    regime_payload = {
+        "enabled": regime_aware_defaults,
+        "regime": "defensive" if defensive else "normal",
+        "defensive": defensive,
+        "median_annualized_volatility": median_volatility,
+        "median_score": median_score,
+        "volatility_threshold": regime_volatility_threshold,
+        "score_threshold": regime_score_threshold,
+        "base_top_n": base_top_n,
+        "effective_top_n": effective_top_n,
+        "base_max_weight": base_max_weight,
+        "effective_max_weight": effective_max_weight,
+    }
+    return effective_top_n, effective_max_weight, regime_payload
+
+
 def write_report(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -582,6 +661,11 @@ def _cli_capabilities_payload() -> dict[str, Any]:
                     "--min-score",
                     "--max-annualized-volatility",
                     "--max-lookback-drawdown",
+                    "--regime-aware-defaults",
+                    "--regime-volatility-threshold",
+                    "--regime-score-threshold",
+                    "--regime-defensive-top-n",
+                    "--regime-defensive-max-weight",
                     "--initial-wealth",
                     "--report-path",
                     "--no-log",
@@ -1014,6 +1098,15 @@ def main() -> int:
     if args.max_lookback_drawdown is not None and not (0 < args.max_lookback_drawdown <= 1):
         print("max-lookback-drawdown must be in (0, 1]")
         return 2
+    if args.regime_volatility_threshold <= 0:
+        print("regime-volatility-threshold must be positive")
+        return 2
+    if args.regime_defensive_top_n < 1:
+        print("regime-defensive-top-n must be at least 1")
+        return 2
+    if not (0 < args.regime_defensive_max_weight <= 1):
+        print("regime-defensive-max-weight must be in (0, 1]")
+        return 2
     if not (0 < args.max_weight <= 1):
         print("max-weight must be in (0, 1]")
         return 2
@@ -1059,8 +1152,19 @@ def main() -> int:
         )
         return 4
 
-    selected = filtered_metrics[: args.top_n]
-    weights = capped_weights([item.score for item in selected], args.max_weight)
+    effective_top_n, effective_max_weight, regime_info = apply_regime_overlay(
+        metrics=filtered_metrics,
+        base_top_n=args.top_n,
+        base_max_weight=args.max_weight,
+        regime_aware_defaults=args.regime_aware_defaults,
+        regime_volatility_threshold=args.regime_volatility_threshold,
+        regime_score_threshold=args.regime_score_threshold,
+        regime_defensive_top_n=args.regime_defensive_top_n,
+        regime_defensive_max_weight=args.regime_defensive_max_weight,
+    )
+
+    selected = filtered_metrics[:effective_top_n]
+    weights = capped_weights([item.score for item in selected], effective_max_weight)
 
     allocations = []
     for item, weight in zip(selected, weights):
@@ -1084,14 +1188,17 @@ def main() -> int:
         "lookback_days": args.lookback_days,
         "risk_free_rate": args.risk_free_rate,
         "max_weight": args.max_weight,
+        "effective_max_weight": effective_max_weight,
         "initial_wealth": args.initial_wealth,
         "top_n": args.top_n,
+        "effective_top_n": effective_top_n,
         "filters": {
             "min_score": args.min_score,
             "max_annualized_volatility": args.max_annualized_volatility,
             "max_lookback_drawdown": args.max_lookback_drawdown,
             "candidates_after_filters": len(filtered_metrics),
         },
+        "regime": regime_info,
         "allocations": allocations,
     }
     write_report(args.report_path, report)

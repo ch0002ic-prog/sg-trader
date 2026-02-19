@@ -204,6 +204,21 @@ Current recommendation (evidence-based, subject to periodic re-scan):
 - Optional runtime default without CLI flag: set `STRATEGY_PROFILE_DEFAULT=aggressive` in environment/.env (CLI `--strategy-profile` still takes precedence).
 - Switch rule: change default to `defensive` only if two consecutive scheduled scans show `defensive` leading both 63-day and 126-day lookbacks.
 
+### Monthly Checkpoint (2026-02-20)
+
+Latest non-mutating monthly check (10 windows per lookback):
+- 63-day: `aggressive` > `defensive` > `normal`
+- 126-day: `defensive` > `normal` > `aggressive`
+- 252-day: `aggressive` > `normal` > `defensive`
+- Stability points (3/2/1 by average-return rank): `aggressive=7`, `defensive=6`, `normal=5`
+
+Concentration guardrails (all pass):
+- `normal`: top3 concentration `0.6787`, effective_n `4.73` (OK)
+- `defensive`: top3 concentration `0.6724`, effective_n `4.86` (OK)
+- `aggressive`: top3 concentration `0.6521`, effective_n `5.13` (OK)
+
+Decision: keep `aggressive` default (switch rule not triggered).
+
 This strategy spec intentionally does not duplicate CI workflow wiring details.
 For CI diagnostics/summary behavior, refer to `README.md` and `docs/runbook.md`.
 

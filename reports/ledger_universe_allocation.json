@@ -1,0 +1,57 @@
+{
+  "timestamp": "2026-02-19 19:01:13",
+  "ledger_path": "fortress_alpha_ledger.json",
+  "universe_size": 10,
+  "lookback_days": 63,
+  "risk_free_rate": 0.0,
+  "max_weight": 0.3,
+  "initial_wealth": 1.0,
+  "top_n": 5,
+  "allocations": [
+    {
+      "ticker": "DCRU.SI",
+      "price": 0.5249999761581421,
+      "score": 0.40802265597460197,
+      "lookback_return": 0.09826067705708064,
+      "annualized_volatility": 0.2408216201190481,
+      "weight": 0.27322460174311086,
+      "allocation": 0.27322460174311086
+    },
+    {
+      "ticker": "IEF",
+      "price": 97.0,
+      "score": 0.4073290382996365,
+      "lookback_return": 0.015361981314409023,
+      "annualized_volatility": 0.03771393608110147,
+      "weight": 0.2727601338753849,
+      "allocation": 0.2727601338753849
+    },
+    {
+      "ticker": "ME8U.SI",
+      "price": 2.0399999618530273,
+      "score": 0.2787825883896897,
+      "lookback_return": 0.025454556349706836,
+      "annualized_volatility": 0.0913061195705873,
+      "weight": 0.1866814515575035,
+      "allocation": 0.1866814515575035
+    },
+    {
+      "ticker": "SPY",
+      "price": 686.2899780273438,
+      "score": 0.21200321986309792,
+      "lookback_return": 0.024389268423072652,
+      "annualized_volatility": 0.11504197171543969,
+      "weight": 0.141963919079429,
+      "allocation": 0.141963919079429
+    },
+    {
+      "ticker": "^SPX",
+      "price": 6881.31005859375,
+      "score": 0.187222368332004,
+      "lookback_return": 0.02185889424155829,
+      "annualized_volatility": 0.11675364667322022,
+      "weight": 0.12536989374457175,
+      "allocation": 0.12536989374457175
+    }
+  ]
+}

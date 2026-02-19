@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+
+# Local env/config
+.env
+.env.*
+
+# Caches
+.cache/
+.pytest_cache/
+
+# OS/editor
+.DS_Store
+.vscode/
+
+# Generated local CI artifacts
+reports/local_ci_result.json
+reports/ci_smoke_summary.json

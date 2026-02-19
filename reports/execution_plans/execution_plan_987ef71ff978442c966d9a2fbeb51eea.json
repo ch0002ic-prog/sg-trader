@@ -1,0 +1,21 @@
+{
+  "plan_id": "987ef71ff978442c966d9a2fbeb51eea",
+  "timestamp": "2026-02-19 20:56:24",
+  "broker": "paper",
+  "symbol": "SPX_PUT",
+  "side": "SELL",
+  "quantity": 1.0,
+  "reference_price": 1.25,
+  "slippage_bps": 5.0,
+  "latency_ms": 150,
+  "expected_fill_range": {
+    "min": 1.2493750000000001,
+    "max": 1.25
+  },
+  "risk": {
+    "blocked": false,
+    "reasons": []
+  },
+  "correlation_id": "0a702620d25047ddba9c940627f1e4a9",
+  "plan_hash": "a4b690383c1b0c7be08bbf576c1d28e803bc3e71962d1f3b01592661f9c067ae"
+}

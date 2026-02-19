@@ -1,0 +1,95 @@
+name: CI Smoke
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run CI smoke wrapper
+        env:
+          CI_SMOKE_SUMMARY_PATH: reports/ci_smoke_summary.json
+        run: bash scripts/ci_smoke.sh
+
+      - name: Upload smoke summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-smoke-summary
+          path: reports/ci_smoke_summary.json
+          if-no-files-found: ignore
+
+  unit-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run focused unit gates
+        run: bash scripts/unit_gates.sh
+
+      - name: Generate strict local CI diagnostics
+        run: |
+          bash scripts/local_ci.sh --strict --json > reports/local_ci_result.json
+          python scripts/local_ci_parse.py --input reports/local_ci_result.json
+
+      - name: Generate smoke artifact for combined summary
+        run: |
+          CI_SMOKE_SUMMARY_PATH=reports/ci_smoke_summary.json bash scripts/ci_smoke.sh > /dev/null
+
+      - name: Print combined CI artifact summary
+        run: |
+          python scripts/print_ci_artifact_summary.py \
+            --smoke-path reports/ci_smoke_summary.json \
+            --local-ci-path reports/local_ci_result.json
+
+      - name: Publish job summary
+        if: always()
+        run: |
+          SUMMARY_LINE="$(python scripts/print_ci_artifact_summary.py --smoke-path reports/ci_smoke_summary.json --local-ci-path reports/local_ci_result.json || true)"
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## CI Artifact Summary
+
+          ```text
+          ${SUMMARY_LINE}
+          ```
+          EOF
+
+      - name: Upload local CI diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-ci-diagnostics
+          path: reports/local_ci_result.json
+          if-no-files-found: ignore

@@ -1,0 +1,357 @@
+# sg-trader
+
+![tests](https://github.com/OWNER/REPO/actions/workflows/tests.yml/badge.svg)
+
+Replace `OWNER/REPO` with your GitHub org/repo to activate the badge.
+
+Decision-support engine for the ergodic barbell strategy. This project fetches market data, computes signals, and logs compliance-friendly entries. Execution remains manual.
+
+## Setup
+
+1. Create/activate your virtual environment:
+
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. (Optional) Configure Telegram alerts:
+
+   ```bash
+   export TELEGRAM_TOKEN="your_bot_token"
+   export TELEGRAM_CHAT_ID="your_chat_id"
+   ```
+
+   Or add a `.env` file:
+
+   ```bash
+   TELEGRAM_TOKEN=your_bot_token
+   TELEGRAM_CHAT_ID=your_chat_id
+   TELEGRAM_TIMEOUT_SECONDS=10
+   TELEGRAM_RETRIES=3
+   TELEGRAM_BACKOFF_SECONDS=1
+   EXECUTION_PLAN_MAX_AGE_HOURS=24
+   ```
+The script uses the MAS eServices Benchmark Prices & Yields page as the source for the latest 6-month T-bill yield.
+If the MAS yield cannot be retrieved, the run will abort (no fallback to a static rate).
+If MAS is unavailable, the last cached yield can be used if it is fresh; a staleness warning is logged when cache is used.
+Startup will fail if key configuration values are invalid.
+
+To enable drift monitoring, add your current allocation snapshot in .env:
+
+```bash
+ALLOC_FORTRESS=0.70
+ALLOC_ALPHA=0.29
+ALLOC_SHIELD=0.01
+ALLOC_GROWTH=0.00
+DRIFT_BAND=0.05
+GROWTH_TICKER=QQQ
+GROWTH_MA_DAYS=200
+
+# Optional log/data tuning
+DEDUP_WINDOW_SECONDS=300
+MAS_MONTHS_BACK=2
+CACHE_DIR=.cache
+MAS_CACHE_MAX_AGE_HOURS=12
+MAS_CACHE_WARN_PCT=0.8
+PAPER_MAX_POSITION_QTY=5
+PAPER_MAX_DAILY_LOSS=0
+PAPER_KILL_SWITCH=false
+PAPER_INITIAL_CAPITAL=100000
+DATA_FRESHNESS_DAYS=2
+MARKET_CACHE_MAX_AGE_HOURS=48
+MARKET_CACHE_WARN_PCT=0.8
+PAPER_MAX_DAILY_TRADES=10
+PAPER_MAX_NOTIONAL=100000
+PAPER_VOL_KILL_THRESHOLD=40
+PNL_DOWNSIDE_MIN_DAYS=10
+MONITORING_WINDOW_DAYS=7
+MONITORING_SPIKE_MULT=2
+MONITORING_MIN_DAYS=3
+MONITORING_REGIME_WINDOW_DAYS=60
+MONITORING_REGIME_ZSCORE=2
+MONITORING_REGIME_CRITICAL_ZSCORE=3
+MONITORING_REGIME_MIN_POINTS=20
+MONITORING_SIGNAL_DRIFT_WINDOW_DAYS=3
+MONITORING_SIGNAL_DRIFT_LOW_MULT=0.5
+MONITORING_ALERT_THROTTLE_HOURS=6
+MONITORING_ALERTS_ENABLED=false
+```
+
+## Usage
+
+Quick onboarding guide: [docs/new-strategy.md](docs/new-strategy.md) (see “Quick Start (5 Commands)”).
+
+CLI discovery endpoints:
+
+```bash
+python main.py --version
+python main.py --cli-capabilities-json
+python main.py --healthcheck
+python main.py --healthcheck-json
+```
+
+Run the ledger-native allocation workflow:
+
+```bash
+python main.py
+```
+
+This uses tickers extracted solely from `fortress_alpha_ledger.json`.
+
+Control allocation inputs:
+
+```bash
+python main.py \
+  --lookback-days 63 \
+  --risk-free-rate 0.0365 \
+  --max-weight 0.30 \
+  --top-n 10 \
+  --initial-wealth 1 \
+  --report-path reports/ledger_universe_allocation.json
+```
+
+List extracted tradable tickers:
+
+```bash
+python main.py --list-tickers
+```
+
+Include synthetic symbols (`PORTFOLIO`, `SPX_PUT`, etc.) in ticker listing:
+
+```bash
+python main.py --list-tickers --include-synthetic
+```
+
+List available execution brokers:
+
+```bash
+python main.py --list-brokers
+```
+
+Generate an execution plan:
+
+```bash
+python main.py --execution-plan \
+  --execution-broker paper \
+  --paper-symbol SPX_PUT \
+  --paper-side SELL \
+  --paper-qty 1 \
+  --paper-reference-price 1.25
+```
+
+Capture only the generated plan ID (for scripting/CI):
+
+```bash
+PLAN_ID=$(python main.py --execution-plan \
+  --execution-broker paper \
+  --paper-symbol SPX_PUT \
+  --paper-side SELL \
+  --paper-qty 1 \
+  --paper-reference-price 1.25 \
+  --execution-plan-id-only)
+echo "$PLAN_ID"
+```
+
+Approve and capture only the approved plan ID:
+
+```bash
+APPROVED_ID=$(python main.py --execution-approve "$PLAN_ID" \
+  --execution-approve-reason "ci-approval" \
+  --execution-approve-id-only)
+echo "$APPROVED_ID"
+```
+
+Run end-to-end CI smoke in one command (plan + approve + replay):
+
+```bash
+python main.py --execution-ci-smoke \
+  --execution-broker paper \
+  --paper-symbol SPX_PUT \
+  --paper-side SELL \
+  --paper-qty 1 \
+  --paper-reference-price 1.25 \
+  --paper-seed 1
+```
+
+Machine-readable CI smoke payload:
+
+```bash
+python main.py --execution-ci-smoke --execution-ci-smoke-json \
+  --execution-broker paper \
+  --paper-symbol SPX_PUT \
+  --paper-side SELL \
+  --paper-qty 1 \
+  --paper-reference-price 1.25 \
+  --paper-seed 1
+```
+
+Approve an execution plan JSON:
+
+```bash
+python main.py --execution-approve <plan_id_or_path> \
+  --execution-approve-reason "Manual approval after review"
+```
+
+Replay an approved execution plan:
+
+```bash
+python main.py --execution-replay <plan_id_or_path> \
+  --paper-seed 1 \
+  --execution-approval-max-age-hours 12
+```
+
+Machine-readable replay payload:
+
+```bash
+python main.py --execution-replay <plan_id_or_path> \
+  --execution-replay-json \
+  --paper-seed 1
+```
+
+Replay with broker override:
+
+```bash
+python main.py --execution-replay <plan_id_or_path> \
+  --paper-seed 1 \
+  --execution-replay-broker paper
+```
+
+Generate portfolio dashboard outputs:
+
+```bash
+python main.py --portfolio-dashboard
+python main.py --portfolio-dashboard --portfolio-start 2026-01-01 --portfolio-end 2026-02-06
+python main.py --portfolio-dashboard --portfolio-skip-recent
+```
+
+Run tests:
+
+```bash
+python -m unittest
+python -m unittest discover -s tests
+```
+
+CI gate (focused execution workflow checks):
+
+```bash
+bash scripts/unit_gates.sh
+```
+
+In GitHub Actions, `unit-gates` also emits `reports/local_ci_result.json` via:
+
+```bash
+bash scripts/local_ci.sh --strict --json > reports/local_ci_result.json
+python scripts/local_ci_parse.py --input reports/local_ci_result.json
+```
+
+`unit-gates` also prints a one-line combined artifact summary in the Actions log:
+
+```bash
+python scripts/print_ci_artifact_summary.py \
+  --smoke-path reports/ci_smoke_summary.json \
+  --local-ci-path reports/local_ci_result.json
+```
+
+One-command CI wrapper (healthcheck + execution smoke):
+
+```bash
+bash scripts/ci_smoke.sh
+```
+
+One-command local pre-merge gates (smoke + focused unit gates):
+
+```bash
+bash scripts/local_ci.sh
+```
+
+Strict mode (also validates smoke JSON `ok=true` shape before unit gates):
+
+```bash
+bash scripts/local_ci.sh --strict
+```
+
+JSON mode (emit one final machine-readable status line):
+
+```bash
+bash scripts/local_ci.sh --json
+bash scripts/local_ci.sh --strict --json
+```
+
+Parse that JSON into a compact CI log line (and preserve exit code semantics):
+
+```bash
+bash scripts/local_ci.sh --strict --json | python scripts/local_ci_parse.py
+```
+
+Summarize both CI artifacts in one line:
+
+```bash
+python scripts/print_ci_artifact_summary.py \
+  --smoke-path reports/ci_smoke_summary.json \
+  --local-ci-path reports/local_ci_result.json
+```
+
+Optional environment overrides:
+
+```bash
+LEDGER_PATH=./fortress_alpha_ledger.json \
+EXECUTION_BROKER=paper \
+PAPER_SYMBOL=SPX_PUT \
+PAPER_SIDE=SELL \
+PAPER_QTY=1 \
+PAPER_REFERENCE_PRICE=1.25 \
+PAPER_SEED=1 \
+bash scripts/ci_smoke.sh
+```
+
+Write combined JSON summary to a file (useful in CI artifacts):
+
+```bash
+CI_SMOKE_SUMMARY_PATH=reports/ci_smoke_summary.json bash scripts/ci_smoke.sh
+```
+
+## Exit Codes
+
+`main.py` uses stable non-zero exit codes for automation:
+
+- `0`: success
+- `2`: invalid allocator argument (for example bad `--lookback-days`, `--top-n`, `--max-weight`, `--initial-wealth`)
+- `3`: no tradable tickers extracted from ledger
+- `4`: ticker metrics could not be computed (insufficient/missing market data)
+- `5`: plan/approval/dashboard validation error (input/payload/hash/date issues)
+- `6`: execution replay validation or broker execution error
+- `8`: risk-gate blocked execution replay/CI smoke (for example kill switch)
+- `9`: healthcheck failed
+
+## Outputs
+
+- Ledger file: `fortress_alpha_ledger.json`
+- Allocation report: `reports/ledger_universe_allocation.json` (or custom `--report-path`)
+- Portfolio dashboard files when requested:
+  - `reports/portfolio_dashboard_all.json`
+  - `reports/portfolio_dashboard_all.md`
+  - `reports/portfolio_dashboard_all.csv`
+  - `reports/portfolio_dashboard_all_correlations.csv`
+
+Note: `external` is a stub adapter that must be implemented before live execution.
+
+Key flag:
+- `--no-log` disables ledger writes for allocation proposal mode.
+
+## Notes
+
+This is a decision-support tool. It does not place trades automatically.
+
+## Governance
+
+See the governance checklist in [docs/governance_checklist.md](docs/governance_checklist.md).
+
+Operational runbook: [docs/runbook.md](docs/runbook.md)
+Strategy comparison summary: [docs/strategy_comparison.md](docs/strategy_comparison.md)

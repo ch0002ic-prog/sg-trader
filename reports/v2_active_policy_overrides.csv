@@ -1,0 +1,5 @@
+state,override_exposure
+low|trend_off|dd_ok|vol_low::de-risk,0.2
+low|trend_off|dd_ok|vol_low::hold,0.2
+mid|trend_off|dd_ok|vol_low::de-risk,0.05
+mid|trend_off|dd_ok|vol_low::hold,-0.05

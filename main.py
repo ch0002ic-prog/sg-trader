@@ -694,6 +694,19 @@ def apply_strategy_profile(
     }
 
 
+def resolve_strategy_profile(
+    *,
+    cli_profile: str,
+    config_profile_default: str,
+    provided_flags: set[str],
+) -> str:
+    if "--strategy-profile" in provided_flags:
+        return cli_profile
+    if config_profile_default in {"none", "normal", "defensive", "aggressive"}:
+        return config_profile_default
+    return cli_profile
+
+
 def write_report(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -871,6 +884,12 @@ def main() -> int:
 
     cfg = load_config()
     cfg.log_file = str(args.ledger_path)
+
+    args.strategy_profile = resolve_strategy_profile(
+        cli_profile=args.strategy_profile,
+        config_profile_default=str(getattr(cfg, "strategy_profile_default", "none")),
+        provided_flags=provided_flags,
+    )
 
     profile_info = apply_strategy_profile(args, provided_flags=provided_flags)
 

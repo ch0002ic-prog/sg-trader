@@ -67,6 +67,7 @@ class AppConfig:
     telegram_retries: int = 3
     telegram_backoff_seconds: float = 1.0
     execution_plan_max_age_hours: float = 24.0
+    strategy_profile_default: str = "none"
     log_file: str = "fortress_alpha_ledger.json"
 
 
@@ -198,6 +199,7 @@ def load_config() -> AppConfig:
             os.getenv("EXECUTION_PLAN_MAX_AGE_HOURS", "24")
         )
         or 24.0,
+        strategy_profile_default=os.getenv("STRATEGY_PROFILE_DEFAULT", "none").strip().lower(),
     )
 
 
@@ -269,6 +271,10 @@ def validate_config(config: AppConfig) -> list[str]:
         errors.append("telegram_backoff_seconds must be non-negative")
     if config.execution_plan_max_age_hours <= 0:
         errors.append("execution_plan_max_age_hours must be positive")
+    if config.strategy_profile_default not in {"none", "normal", "defensive", "aggressive"}:
+        errors.append(
+            "strategy_profile_default must be one of: none, normal, defensive, aggressive"
+        )
 
     allocs = [
         config.alloc_fortress,

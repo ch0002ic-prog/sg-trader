@@ -178,6 +178,7 @@ Observed ranking from generated summary artifacts (`reports/walkforward_profile_
 
 Current recommendation (evidence-based, subject to periodic re-scan):
 - Use `--strategy-profile aggressive` as default for now.
+- Optional runtime default without CLI flag: set `STRATEGY_PROFILE_DEFAULT=aggressive` in environment/.env.
 - Re-run the same scan periodically to confirm ranking stability before changing defaults.
 
 This strategy spec intentionally does not duplicate CI workflow wiring details.

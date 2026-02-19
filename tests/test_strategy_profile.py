@@ -1,7 +1,7 @@
 import argparse
 import unittest
 
-from main import apply_strategy_profile
+from main import apply_strategy_profile, resolve_strategy_profile
 
 
 class StrategyProfileTests(unittest.TestCase):
@@ -53,6 +53,22 @@ class StrategyProfileTests(unittest.TestCase):
         self.assertEqual(info["profile"], "none")
         self.assertEqual(info["applied_overrides"], {})
         self.assertFalse(args.regime_aware_defaults)
+
+    def test_resolve_strategy_profile_uses_config_default(self) -> None:
+        resolved = resolve_strategy_profile(
+            cli_profile="none",
+            config_profile_default="aggressive",
+            provided_flags=set(),
+        )
+        self.assertEqual(resolved, "aggressive")
+
+    def test_resolve_strategy_profile_cli_flag_wins(self) -> None:
+        resolved = resolve_strategy_profile(
+            cli_profile="defensive",
+            config_profile_default="aggressive",
+            provided_flags={"--strategy-profile"},
+        )
+        self.assertEqual(resolved, "defensive")
 
 
 if __name__ == "__main__":

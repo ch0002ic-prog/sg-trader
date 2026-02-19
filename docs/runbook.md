@@ -15,6 +15,7 @@
 	- `python main.py --portfolio-dashboard`
 	- `python main.py --portfolio-dashboard --portfolio-skip-recent`
 - Review execution replay entries for broker overrides and hash/approval integrity.
+- Review artifacts from GitHub Actions workflow `Weekly Walkforward Scan` (`weekly-walkforward-scan`) and confirm profile ranking has not materially drifted.
 
 ## Monthly
 

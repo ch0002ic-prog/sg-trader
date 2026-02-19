@@ -159,6 +159,27 @@ Operational baseline to keep green:
 Optional strategy tuning support:
 - `python scripts/walkforward_profile_scan.py --profiles normal,defensive,aggressive --lookback-days 63 --forward-days 21 --windows 6`
 
+## Current Tuning Snapshot (2026-02-19)
+
+Broader walk-forward scan (10 windows):
+
+```bash
+python scripts/walkforward_profile_scan.py \
+	--profiles normal,defensive,aggressive \
+	--lookback-days 63 \
+	--forward-days 21 \
+	--windows 10
+```
+
+Observed ranking from generated summary artifacts (`reports/walkforward_profile_scan.*`):
+- `aggressive`: avg forward return 0.00919, median 0.00737, win rate 70%
+- `defensive`: avg forward return 0.00764, median 0.00553, win rate 70%
+- `normal`: avg forward return 0.00684, median 0.00465, win rate 70%
+
+Current recommendation (evidence-based, subject to periodic re-scan):
+- Use `--strategy-profile aggressive` as default for now.
+- Re-run the same scan periodically to confirm ranking stability before changing defaults.
+
 This strategy spec intentionally does not duplicate CI workflow wiring details.
 For CI diagnostics/summary behavior, refer to `README.md` and `docs/runbook.md`.
 

@@ -219,6 +219,10 @@ Concentration guardrails (all pass):
 
 Decision: keep `aggressive` default (switch rule not triggered).
 
+Operationalization note:
+- Use `bash scripts/monthly_strategy_check.sh` to generate the monthly decision pack automatically.
+- Guardrail alerting is enforced by `scripts/monthly_strategy_guardrail_alert.py` (monthly pack exits non-zero on breach unless soft-fail mode is used).
+
 This strategy spec intentionally does not duplicate CI workflow wiring details.
 For CI diagnostics/summary behavior, refer to `README.md` and `docs/runbook.md`.
 

@@ -502,6 +502,11 @@ def capped_weights(scores: list[float], max_weight: float) -> list[float]:
     if positive.sum() <= 0:
         return [0.0 for _ in scores]
 
+    positive_count = int(np.count_nonzero(positive > 0))
+    effective_cap = max_weight
+    if positive_count > 0:
+        effective_cap = max(max_weight, 1.0 / positive_count)
+
     raw = positive / positive.sum()
     weights = np.zeros_like(raw)
     remaining = 1.0
@@ -514,9 +519,9 @@ def capped_weights(scores: list[float], max_weight: float) -> list[float]:
         clipped_this_round = False
         for idx in list(remaining_idx):
             w = remaining * raw[idx] / prorata_base
-            if w >= max_weight:
-                weights[idx] = max_weight
-                remaining -= max_weight
+            if w >= effective_cap:
+                weights[idx] = effective_cap
+                remaining -= effective_cap
                 remaining_idx.remove(idx)
                 clipped_this_round = True
         if not clipped_this_round:
@@ -1315,16 +1320,25 @@ def main() -> int:
     )
 
     selected = ranked_metrics[:effective_top_n]
+    selected_scores = [
+        selection_score(
+            item,
+            score_volatility_penalty=args.score_volatility_penalty,
+            score_drawdown_penalty=args.score_drawdown_penalty,
+        )
+        for item in selected
+    ]
+    positive_selected = sum(1 for score in selected_scores if score > 0)
+    effective_max_weight_for_weights = effective_max_weight
+    if positive_selected > 0:
+        effective_max_weight_for_weights = max(
+            effective_max_weight,
+            1.0 / positive_selected,
+        )
+
     weights = capped_weights(
-        [
-            selection_score(
-                item,
-                score_volatility_penalty=args.score_volatility_penalty,
-                score_drawdown_penalty=args.score_drawdown_penalty,
-            )
-            for item in selected
-        ],
-        effective_max_weight,
+        selected_scores,
+        effective_max_weight_for_weights,
     )
 
     allocations = []
@@ -1354,7 +1368,7 @@ def main() -> int:
         "lookback_days": args.lookback_days,
         "risk_free_rate": args.risk_free_rate,
         "max_weight": args.max_weight,
-        "effective_max_weight": effective_max_weight,
+        "effective_max_weight": effective_max_weight_for_weights,
         "initial_wealth": args.initial_wealth,
         "top_n": args.top_n,
         "effective_top_n": effective_top_n,
@@ -1368,6 +1382,12 @@ def main() -> int:
         },
         "strategy_profile": profile_info,
         "regime": regime_info,
+        "cap_feasibility": {
+            "positive_selected": positive_selected,
+            "requested_effective_max_weight": effective_max_weight,
+            "used_effective_max_weight": effective_max_weight_for_weights,
+            "relaxed": effective_max_weight_for_weights > effective_max_weight,
+        },
         "allocations": allocations,
     }
     write_report(args.report_path, report)

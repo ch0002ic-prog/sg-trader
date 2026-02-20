@@ -32,12 +32,14 @@ Primary objective: propose allocations that optimize growth relative to a $1 bas
 ## Scope
 
 In scope:
+
 - Ledger-native ticker universe construction
 - Risk-adjusted scoring and capped allocation proposals
 - Execution governance via plan approval and replay
 - Operational dashboards and controls
 
 Out of scope:
+
 - Direct live order routing
 - Broker API development
 - Legacy backtest/monitoring command families removed from `main.py`
@@ -53,6 +55,7 @@ No external allowlists are permitted in the strategy runtime.
 Current entrypoint: `main.py`.
 
 Modes:
+
 1. Allocation mode (default): computes proposal report from ledger-derived symbols
 2. Execution governance mode: approval/replay utilities
 3. Operational reporting mode: portfolio dashboard generation
@@ -62,6 +65,7 @@ Modes:
 ### Universe Extraction
 
 Universe extraction reads:
+
 - top-level `ticker`
 - nested `details` recursively for keys like `ticker` and `symbol`
 
@@ -76,15 +80,17 @@ Minimum history requirement: `lookback_days + 1` rows.
 ## Allocation Logic
 
 For each ticker:
+
 - Compute lookback return over configured window
 - Compute annualized volatility from log returns
 - Compute risk-adjusted score:
 
 $$
-\text{score}_i = \frac{R_i - r_f \cdot (L/252)}{\max(\sigma_i, \epsilon)}
+\mathrm{score}_i = \frac{R_i - r_f \cdot (L/252)}{\max(\sigma_i, \epsilon)}
 $$
 
 where:
+
 - $R_i$ = lookback return
 - $r_f$ = annual risk-free rate input
 - $L$ = lookback window in days
@@ -92,6 +98,7 @@ where:
 - $\epsilon$ = small floor to avoid divide-by-zero
 
 Selection and sizing:
+
 - Rank tickers by score descending
 - Optionally filter by minimum score (`--min-score`)
 - Optionally filter by volatility ceiling (`--max-annualized-volatility`)
@@ -120,6 +127,7 @@ The plan includes `plan_hash` used by approval and replay validation.
 ### Replay
 
 `--execution-replay` enforces:
+
 - Plan hash validation
 - Plan age limits
 - Approval existence and approval hash match
@@ -144,6 +152,7 @@ For operational health checks, CI wrappers, machine-readable endpoints, and diag
 ## Outputs
 
 Core artifacts:
+
 - `reports/ledger_universe_allocation.json`
 - `reports/execution_plans/execution_plan_<id>.json`
 - `reports/execution_plans/execution_approval_<id>.json`
@@ -155,9 +164,11 @@ Core artifacts:
 ## Validation Baseline
 
 Operational baseline to keep green:
+
 - `bash scripts/unit_gates.sh`
 
 Optional strategy tuning support:
+
 - `python scripts/walkforward_profile_scan.py --profiles normal,defensive,aggressive --lookback-days 63 --forward-days 21 --windows 6`
 
 ## Current Tuning Snapshot (2026-02-19)
@@ -167,39 +178,41 @@ Multi-lookback walk-forward scans (10 windows each):
 ```bash
 # 63-day lookback
 python scripts/walkforward_profile_scan.py \
-	--profiles normal,defensive,aggressive \
-	--lookback-days 63 \
-	--forward-days 21 \
-	--windows 10
+   --profiles normal,defensive,aggressive \
+   --lookback-days 63 \
+   --forward-days 21 \
+   --windows 10
 
 # 126-day lookback
 python scripts/walkforward_profile_scan.py \
-	--profiles normal,defensive,aggressive \
-	--lookback-days 126 \
-	--forward-days 21 \
-	--windows 10 \
-	--out-csv reports/walkforward_profile_scan_lb126.csv \
-	--out-md reports/walkforward_profile_scan_lb126.md \
-	--out-detail-csv reports/walkforward_profile_scan_lb126_detail.csv
+   --profiles normal,defensive,aggressive \
+   --lookback-days 126 \
+   --forward-days 21 \
+   --windows 10 \
+   --out-csv reports/walkforward_profile_scan_lb126.csv \
+   --out-md reports/walkforward_profile_scan_lb126.md \
+   --out-detail-csv reports/walkforward_profile_scan_lb126_detail.csv
 
 # 252-day lookback
 python scripts/walkforward_profile_scan.py \
-	--profiles normal,defensive,aggressive \
-	--lookback-days 252 \
-	--forward-days 21 \
-	--windows 10 \
-	--out-csv reports/walkforward_profile_scan_lb252.csv \
-	--out-md reports/walkforward_profile_scan_lb252.md \
-	--out-detail-csv reports/walkforward_profile_scan_lb252_detail.csv
+   --profiles normal,defensive,aggressive \
+   --lookback-days 252 \
+   --forward-days 21 \
+   --windows 10 \
+   --out-csv reports/walkforward_profile_scan_lb252.csv \
+   --out-md reports/walkforward_profile_scan_lb252.md \
+   --out-detail-csv reports/walkforward_profile_scan_lb252_detail.csv
 ```
 
 Observed ranking summary:
+
 - 63-day: `aggressive` > `defensive` > `normal`
 - 126-day: `defensive` > `normal` > `aggressive`
 - 252-day: `aggressive` > `normal` > `defensive`
 - Stability points (3/2/1 by average-return rank): `aggressive=7`, `defensive=6`, `normal=5`
 
 Current recommendation (evidence-based, subject to periodic re-scan):
+
 - Keep `--strategy-profile aggressive` as default for now.
 - Optional runtime default without CLI flag: set `STRATEGY_PROFILE_DEFAULT=aggressive` in environment/.env (CLI `--strategy-profile` still takes precedence).
 - Switch rule: change default to `defensive` only if two consecutive scheduled scans show `defensive` leading both 63-day and 126-day lookbacks.
@@ -207,12 +220,14 @@ Current recommendation (evidence-based, subject to periodic re-scan):
 ### Monthly Checkpoint (2026-02-20)
 
 Latest non-mutating monthly check (10 windows per lookback):
+
 - 63-day: `aggressive` > `defensive` > `normal`
 - 126-day: `defensive` > `normal` > `aggressive`
 - 252-day: `aggressive` > `normal` > `defensive`
 - Stability points (3/2/1 by average-return rank): `aggressive=7`, `defensive=6`, `normal=5`
 
 Concentration guardrails (all pass):
+
 - `normal`: top3 concentration `0.6787`, effective_n `4.73` (OK)
 - `defensive`: top3 concentration `0.6724`, effective_n `4.86` (OK)
 - `aggressive`: top3 concentration `0.6521`, effective_n `5.13` (OK)
@@ -220,6 +235,7 @@ Concentration guardrails (all pass):
 Decision: keep `aggressive` default (switch rule not triggered).
 
 Operationalization note:
+
 - Use `bash scripts/monthly_strategy_check.sh` to generate the monthly decision pack automatically.
 - Guardrail alerting is enforced by `scripts/monthly_strategy_guardrail_alert.py` (monthly pack exits non-zero on breach unless soft-fail mode is used).
 
@@ -231,6 +247,7 @@ For CI diagnostics/summary behavior, refer to `README.md` and `docs/runbook.md`.
 This repository remains a decision-support and paper-execution framework.
 
 Before any production capital deployment:
+
 - Add separate operational risk controls
 - Add independent reconciliation checks
 - Add strict secrets/config management
@@ -239,6 +256,7 @@ Before any production capital deployment:
 ## Change Control
 
 Any future strategy changes must preserve:
+
 1. Ledger-only ticker universe rule
 2. Backward-compatible execution governance semantics unless explicitly versioned
 3. Deterministic replay behavior for auditable operations

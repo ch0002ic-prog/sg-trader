@@ -50,8 +50,12 @@
 - Tune allocator robustness enforcement in CI smoke (via env vars when needed):
 	- `ENFORCE_ROBUSTNESS_GATE=1` (default)
 	- `ROBUSTNESS_STRATEGY_PROFILE=aggressive` (default)
+	- `ROBUSTNESS_THRESHOLD_MODE=global` (default; set `regime` for regime-specific thresholds)
 	- `ROBUSTNESS_MAX_TOP3_CONCENTRATION=0.70` (default)
 	- `ROBUSTNESS_MIN_EFFECTIVE_N=4.0` (default)
+	- Regime mode knobs:
+		- `ROBUSTNESS_MAX_TOP3_CONCENTRATION_NORMAL`, `ROBUSTNESS_MIN_EFFECTIVE_N_NORMAL`
+		- `ROBUSTNESS_MAX_TOP3_CONCENTRATION_DEFENSIVE`, `ROBUSTNESS_MIN_EFFECTIVE_N_DEFENSIVE`
 	- Example calibrated override:
 		- `ROBUSTNESS_MAX_TOP3_CONCENTRATION=0.8644 ROBUSTNESS_MIN_EFFECTIVE_N=3.4433 bash scripts/ci_smoke.sh`
 - Run focused unit gates:
@@ -70,6 +74,9 @@
 - Summarize both artifacts in one line:
 	- `python scripts/print_ci_artifact_summary.py --smoke-path reports/ci_smoke_summary.json --local-ci-path reports/local_ci_result.json`
 - `unit-gates` prints this combined summary line directly in the workflow log for quick triage.
+- Investigation trigger rule (to avoid over-analysis):
+	- Run full deep-dive calibration only if robustness breaches persist for 2+ consecutive promotion runs, or after a strategy logic change.
+	- Otherwise use Tier-1 checks only (`ci_smoke` + focused unit gates).
 
 ## Exit Codes (for CI and Ops)
 

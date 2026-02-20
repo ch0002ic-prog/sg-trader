@@ -356,6 +356,18 @@ ROBUSTNESS_MIN_EFFECTIVE_N=4.0 \
 bash scripts/ci_smoke.sh
 ```
 
+Regime-threshold mode (use different robustness thresholds for normal vs defensive regimes):
+
+```bash
+ENFORCE_ROBUSTNESS_GATE=1 \
+ROBUSTNESS_THRESHOLD_MODE=regime \
+ROBUSTNESS_MAX_TOP3_CONCENTRATION_NORMAL=0.70 \
+ROBUSTNESS_MIN_EFFECTIVE_N_NORMAL=4.0 \
+ROBUSTNESS_MAX_TOP3_CONCENTRATION_DEFENSIVE=0.75 \
+ROBUSTNESS_MIN_EFFECTIVE_N_DEFENSIVE=3.8 \
+bash scripts/ci_smoke.sh
+```
+
 Robustness calibration outputs are generated at:
 
 - `reports/robustness_threshold_calibration_latest.json`
@@ -367,6 +379,11 @@ Latest calibration recommendation (36-scenario grid):
 - `ROBUSTNESS_MIN_EFFECTIVE_N=3.4433`
 
 Use these as promotion-pipeline starting points if current defaults are too strict for your scenario mix.
+
+Investigation cadence recommendation:
+
+- Always run Tier-1 checks (`bash scripts/ci_smoke.sh` + focused unit tests).
+- Run deep calibration grids only when guardrails are unstable, for example when robustness breaches happen for 2+ consecutive promotion runs.
 
 Write combined JSON summary to a file (useful in CI artifacts):
 

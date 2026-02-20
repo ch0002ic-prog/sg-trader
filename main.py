@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import sys
 import uuid
 from dataclasses import dataclass
@@ -875,7 +876,33 @@ def _cli_capabilities_payload() -> dict[str, Any]:
     }
 
 
+def _cleanup_pycache_dirs(project_root: Path) -> int:
+    removed = 0
+    candidates: list[Path] = []
+    root_cache = project_root / "__pycache__"
+    if root_cache.is_dir():
+        candidates.append(root_cache)
+    candidates.extend(path for path in project_root.rglob("__pycache__") if path.is_dir())
+
+    seen: set[Path] = set()
+    for cache_dir in candidates:
+        resolved = cache_dir.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        try:
+            shutil.rmtree(cache_dir)
+            removed += 1
+        except OSError:
+            continue
+
+    return removed
+
+
 def main() -> int:
+    project_root = Path(__file__).resolve().parent
+    _cleanup_pycache_dirs(project_root)
+
     parser = build_parser()
     args = parser.parse_args()
     provided_flags = _provided_cli_flags(sys.argv[1:])

@@ -151,6 +151,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="Initial wealth amount used for allocation output.",
     )
     parser.add_argument(
+        "--robustness-gate",
+        action="store_true",
+        help=(
+            "Fail allocator run when concentration/diversification robustness "
+            "thresholds are breached."
+        ),
+    )
+    parser.add_argument(
+        "--robustness-max-top3-concentration",
+        type=float,
+        default=0.70,
+        help="Maximum allowed sum of top-3 portfolio weights when robustness gate is enabled.",
+    )
+    parser.add_argument(
+        "--robustness-min-effective-n",
+        type=float,
+        default=4.0,
+        help="Minimum allowed effective N (1/HHI) when robustness gate is enabled.",
+    )
+    parser.add_argument(
         "--list-tickers",
         action="store_true",
         help="List extracted ledger tickers and exit.",
@@ -560,6 +580,53 @@ def apply_strategy_filters(
     return filtered
 
 
+def _robustness_observed_metrics(
+    allocations: list[dict[str, Any]],
+) -> dict[str, float | int]:
+    positive_weights = [
+        float(row["weight"]) for row in allocations if float(row.get("weight", 0.0)) > 0
+    ]
+    sorted_weights = sorted(positive_weights, reverse=True)
+    top3_concentration = float(sum(sorted_weights[:3]))
+    hhi = float(sum(weight * weight for weight in positive_weights))
+    effective_n = float((1.0 / hhi) if hhi > 0 else 0.0)
+    return {
+        "selected_count": len(positive_weights),
+        "top3_concentration": top3_concentration,
+        "effective_n": effective_n,
+        "sum_weights": float(sum(positive_weights)),
+        "max_weight_used": float(max(positive_weights) if positive_weights else 0.0),
+    }
+
+
+def evaluate_robustness_gate(
+    *,
+    allocations: list[dict[str, Any]],
+    enabled: bool,
+    max_top3_concentration: float,
+    min_effective_n: float,
+) -> dict[str, Any]:
+    observed = _robustness_observed_metrics(allocations)
+    breaches: list[str] = []
+
+    if enabled:
+        if observed["top3_concentration"] > max_top3_concentration:
+            breaches.append("top3_concentration")
+        if observed["effective_n"] < min_effective_n:
+            breaches.append("effective_n")
+
+    return {
+        "enabled": enabled,
+        "pass": not breaches,
+        "thresholds": {
+            "max_top3_concentration": float(max_top3_concentration),
+            "min_effective_n": float(min_effective_n),
+        },
+        "observed": observed,
+        "breaches": breaches,
+    }
+
+
 def selection_score(
     item: TickerMetrics,
     *,
@@ -799,6 +866,9 @@ def _cli_capabilities_payload() -> dict[str, Any]:
                     "--regime-defensive-top-n",
                     "--regime-defensive-max-weight",
                     "--initial-wealth",
+                    "--robustness-gate",
+                    "--robustness-max-top3-concentration",
+                    "--robustness-min-effective-n",
                     "--report-path",
                     "--no-log",
                 ],
@@ -870,6 +940,7 @@ def _cli_capabilities_payload() -> dict[str, Any]:
             "4": "metrics unavailable from market data",
             "5": "plan/approval/dashboard validation failure",
             "6": "execution replay validation or broker execution failure",
+            "7": "allocator robustness gate failed",
             "8": "risk gate blocked replay/ci smoke",
             "9": "healthcheck failure",
         },
@@ -1286,6 +1357,12 @@ def main() -> int:
     if args.initial_wealth <= 0:
         print("initial-wealth must be positive")
         return 2
+    if not (0 < args.robustness_max_top3_concentration <= 1):
+        print("robustness-max-top3-concentration must be in (0, 1]")
+        return 2
+    if args.robustness_min_effective_n <= 0:
+        print("robustness-min-effective-n must be positive")
+        return 2
 
     entries = load_ledger(args.ledger_path)
     tradable_tickers, all_tickers = extract_ledger_tickers(entries)
@@ -1415,6 +1492,12 @@ def main() -> int:
             "used_effective_max_weight": effective_max_weight_for_weights,
             "relaxed": effective_max_weight_for_weights > effective_max_weight,
         },
+        "robustness_gate": evaluate_robustness_gate(
+            allocations=allocations,
+            enabled=bool(args.robustness_gate),
+            max_top3_concentration=args.robustness_max_top3_concentration,
+            min_effective_n=args.robustness_min_effective_n,
+        ),
         "allocations": allocations,
     }
     write_report(args.report_path, report)
@@ -1427,6 +1510,12 @@ def main() -> int:
             f"alloc=${row['allocation']:.4f}, score={row['score']:.4f}"
         )
     print(f"Report written: {args.report_path}")
+
+    robustness_gate = report["robustness_gate"]
+    if robustness_gate["enabled"] and not robustness_gate["pass"]:
+        breaches = ", ".join(robustness_gate["breaches"]) or "unknown"
+        print(f"Robustness gate failed: {breaches}")
+        return 7
 
     if not args.no_log:
         log_transaction(

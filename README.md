@@ -349,8 +349,24 @@ PAPER_SIDE=SELL \
 PAPER_QTY=1 \
 PAPER_REFERENCE_PRICE=1.25 \
 PAPER_SEED=1 \
+ENFORCE_ROBUSTNESS_GATE=1 \
+ROBUSTNESS_STRATEGY_PROFILE=aggressive \
+ROBUSTNESS_MAX_TOP3_CONCENTRATION=0.70 \
+ROBUSTNESS_MIN_EFFECTIVE_N=4.0 \
 bash scripts/ci_smoke.sh
 ```
+
+Robustness calibration outputs are generated at:
+
+- `reports/robustness_threshold_calibration_latest.json`
+- `reports/robustness_threshold_calibration_latest.md`
+
+Latest calibration recommendation (36-scenario grid):
+
+- `ROBUSTNESS_MAX_TOP3_CONCENTRATION=0.8644`
+- `ROBUSTNESS_MIN_EFFECTIVE_N=3.4433`
+
+Use these as promotion-pipeline starting points if current defaults are too strict for your scenario mix.
 
 Write combined JSON summary to a file (useful in CI artifacts):
 
@@ -368,6 +384,7 @@ CI_SMOKE_SUMMARY_PATH=reports/ci_smoke_summary.json bash scripts/ci_smoke.sh
 - `4`: ticker metrics could not be computed (insufficient/missing market data)
 - `5`: plan/approval/dashboard validation error (input/payload/hash/date issues)
 - `6`: execution replay validation or broker execution error
+- `7`: allocator robustness gate failed (top-3 concentration and/or effective-n threshold breach)
 - `8`: risk-gate blocked execution replay/CI smoke (for example kill switch)
 - `9`: healthcheck failed
 

@@ -47,6 +47,13 @@
 	- `python main.py --list-brokers`
 - Run consolidated CI probe:
 	- `bash scripts/ci_smoke.sh`
+- Tune allocator robustness enforcement in CI smoke (via env vars when needed):
+	- `ENFORCE_ROBUSTNESS_GATE=1` (default)
+	- `ROBUSTNESS_STRATEGY_PROFILE=aggressive` (default)
+	- `ROBUSTNESS_MAX_TOP3_CONCENTRATION=0.70` (default)
+	- `ROBUSTNESS_MIN_EFFECTIVE_N=4.0` (default)
+	- Example calibrated override:
+		- `ROBUSTNESS_MAX_TOP3_CONCENTRATION=0.8644 ROBUSTNESS_MIN_EFFECTIVE_N=3.4433 bash scripts/ci_smoke.sh`
 - Run focused unit gates:
 	- `bash scripts/unit_gates.sh`
 - Run full local pre-merge CI:
@@ -72,5 +79,6 @@
 - `4`: no computable metrics from market data
 - `5`: plan/approval/dashboard validation failure
 - `6`: execution replay validation/execution failure
+- `7`: allocator robustness gate failed
 - `8`: replay blocked by risk gate
 - `9`: healthcheck failure

@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-03-02 11:05:54",
+  "source_glob": "reports/wealth_forecast_5m*.csv",
+  "files_scanned": 3,
+  "files_used": 1,
+  "min_rows_required": 1,
+  "promoted_params": {
+    "fast_window": 3,
+    "slow_window": 18,
+    "fast_weight": 0.8,
+    "vol_window": 36
+  },
+  "stats": {
+    "rows": 1,
+    "median_ratio": 0.999654604940502,
+    "mean_ratio": 0.999654604940502,
+    "hit_rate_ge_1": 0.0,
+    "loss_rate_lt_1": 1.0,
+    "min_ratio": 0.999654604940502
+  }
+}

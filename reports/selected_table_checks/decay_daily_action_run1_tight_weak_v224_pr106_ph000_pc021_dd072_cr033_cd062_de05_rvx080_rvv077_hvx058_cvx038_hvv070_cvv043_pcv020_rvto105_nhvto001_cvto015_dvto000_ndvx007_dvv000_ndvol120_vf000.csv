@@ -1,0 +1,10 @@
+date,ticker,regime_combo,policy_action,rolling_sharpe,rolling_cagr
+2026-02-12 00:00:00-05:00,^SPX,high|trend_off|dd_ok|vol_low,de-risk,-0.5561159500415536,-0.07474026233199482
+2026-02-12 00:00:00-05:00,QQQ,high|trend_off|dd_ok|vol_low,de-risk,-1.4751542600012497,-0.2279861973861672
+2026-02-18 00:00:00-05:00,^VIX,mid|trend_off|dd_ok|vol_low,hold,2.319210490226644,9.09037299339815
+2026-02-17 00:00:00-05:00,^VVIX,mid|trend_off|dd_ok|vol_low,hold,1.9215240001941984,3.2677857478258465
+2026-02-19 00:00:00+08:00,A17U.SI,high|trend_off|dd_ok|vol_low,de-risk,-1.9253302093840756,-0.20363853190920056
+2026-02-19 00:00:00+08:00,M44U.SI,high|trend_off|dd_ok|vol_low,de-risk,-1.4836194292827813,-0.18788711614859044
+2026-02-19 00:00:00+08:00,ME8U.SI,high|trend_off|dd_ok|vol_low,de-risk,-0.4027468760470367,-0.03413308876554666
+2026-02-12 00:00:00+08:00,AJBU.SI,high|trend_off|dd_ok|vol_low,de-risk,2.06894460253287,0.2171102804853886
+2026-02-16 00:00:00+08:00,DCRU.SI,high|trend_off|dd_ok|vol_low,de-risk,-0.4931536810218857,-0.09641627749450465

@@ -1,0 +1,10 @@
+state,override_exposure
+high|trend_off|dd_ok|vol_low::de-risk::rs_l::dd_unknown,0.16305859374999998
+low|trend_off|dd_ok|vol_low::de-risk::rs_h::dd_unknown,0.475
+low|trend_off|dd_ok|vol_low::de-risk::rs_l::dd_unknown,0.475
+low|trend_off|dd_ok|vol_low::de-risk::rs_m::dd_unknown,0.475
+mid|trend_off|dd_ok|vol_low::de-risk::rs_h::dd_unknown,0.475
+mid|trend_off|dd_ok|vol_low::de-risk::rs_l::dd_unknown,0.475
+mid|trend_off|dd_ok|vol_low::de-risk::rs_m::dd_unknown,0.475
+mid|trend_off|dd_ok|vol_low::hold::rs_h::dd_unknown,-0.475
+mid|trend_off|dd_ok|vol_low::hold::rs_m::dd_unknown,-0.475

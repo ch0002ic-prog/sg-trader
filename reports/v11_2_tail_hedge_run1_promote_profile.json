@@ -1,0 +1,17 @@
+{
+  "profile": "v11_2_tuned",
+  "label": "run1_tight_weak_v224_pr106_ph000_pc021_dd072_cr033_cd062_de05_rvx080_rvv077_hvx058_cvx038_hvv070_cvv043_pcv020_rvto105_nhvto001_cvto015_dvto000_ndvx007_dvv000_ndvol120_vf000",
+  "rerisk": 0.04,
+  "hold": 0.46,
+  "cap": 0.03,
+  "derisk": 0.18,
+  "persistence_days": 1,
+  "state_schema": "auto",
+  "tail_hedge": {
+    "stress_start": "2008-05-05",
+    "stress_end": "2009-09-30",
+    "stress_cap": 0.15,
+    "state_substr": "::de-risk",
+    "state_cap": 0.15
+  }
+}

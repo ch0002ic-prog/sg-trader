@@ -1,0 +1,2 @@
+timestamp,step,mode,broker,symbol,price,forecast_return,volatility,confidence,target_exposure,realized_exposure,action,executed_qty,fill_price,cash,units,wealth,data_points,wf_fast_window,wf_slow_window,wf_fast_weight,wf_vol_window
+2026-03-02 11:00:06,0,paper,paper,SPY,686.280029296875,0.0005296292000567171,0.0005637001659684638,0.9395583539465326,0.9395583539465326,0.9398728910340817,BUY,0.0013690597333994299,686.5244738365435,0.060106986877157875,0.0013690597333994299,0.9996653408236905,4520,3,18,0.8,36

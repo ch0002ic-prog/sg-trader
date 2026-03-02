@@ -1,0 +1,7 @@
+numpy
+pandas
+beautifulsoup4
+python-dotenv
+requests
+vectorbt
+yfinance

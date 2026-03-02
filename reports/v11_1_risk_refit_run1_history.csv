@@ -1,0 +1,2 @@
+iter,improved,min_median_delta_terminal,min_pass_rate_terminal,avg_median_delta_terminal,avg_median_delta_sharpe,worst_fold_maxdd,worst_stress_maxdd,full_candidate_maxdd,active_states
+1,False,0.0,0.0,0.0,0.0,-0.11807644356408231,-0.2860583885011443,-0.2859211676670391,9

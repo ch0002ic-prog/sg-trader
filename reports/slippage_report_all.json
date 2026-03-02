@@ -1,0 +1,61 @@
+{
+  "summary": {
+    "total_trades": 4,
+    "manual_trades": 1,
+    "total_slippage": 0.0526418432390261,
+    "average_slippage": 0.013160460809756525,
+    "average_slippage_bps": -83.40868647805218,
+    "total_commission": 0.5,
+    "average_commission": 0.5
+  },
+  "trades": [
+    {
+      "timestamp": "2026-02-06 15:28:40",
+      "symbol": "SPX_PUT",
+      "side": "MANUAL_SELL",
+      "quantity": 1.0,
+      "reference_price": 1.6,
+      "fill_price": 1.55,
+      "slippage": 0.050000000000000044,
+      "slippage_bps": -312.5000000000003,
+      "commission": 0.5,
+      "venue": "BrokerX"
+    },
+    {
+      "timestamp": "2026-02-06 17:39:21",
+      "symbol": "SPX_PUT",
+      "side": "PAPER_SELL",
+      "quantity": 1.0,
+      "reference_price": 1.25,
+      "fill_price": 1.2491409411270673,
+      "slippage": 0.0008590588729326942,
+      "slippage_bps": -6.872470983461554,
+      "commission": null,
+      "venue": null
+    },
+    {
+      "timestamp": "2026-02-06 17:46:06",
+      "symbol": "SPX_PUT",
+      "side": "PAPER_SELL",
+      "quantity": 1.0,
+      "reference_price": 1.25,
+      "fill_price": 1.2490968746911835,
+      "slippage": 0.0009031253088165325,
+      "slippage_bps": -7.22500247053226,
+      "commission": null,
+      "venue": null
+    },
+    {
+      "timestamp": "2026-02-06 18:01:50",
+      "symbol": "SPX_PUT",
+      "side": "PAPER_SELL",
+      "quantity": 1.0,
+      "reference_price": 1.25,
+      "fill_price": 1.2491203409427232,
+      "slippage": 0.000879659057276827,
+      "slippage_bps": -7.037272458214616,
+      "commission": null,
+      "venue": null
+    }
+  ]
+}

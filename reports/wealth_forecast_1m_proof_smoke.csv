@@ -1,0 +1,3 @@
+timestamp,step,mode,broker,symbol,price,forecast_return,volatility,confidence,target_exposure,realized_exposure,action,executed_qty,fill_price,cash,units,wealth,wealth_ratio,wealth_gain_flag,interval_next_price,interval_simple_return,interval_model_ratio,interval_oracle_exposure,interval_oracle_ratio,interval_regret,interval_optimal_flag,data_points,wf_fast_window,wf_slow_window,wf_fast_weight,wf_vol_window
+2026-03-02 11:13:47,0,paper,paper,SPY,,0.0,,0.0,0.0,0.0,NO_DATA,0.0,,1.0,0.0,1.0,,,,,,,,,,0,3,12,0.65,24
+2026-03-02 11:14:00,1,paper,paper,SPY,,0.0,,0.0,0.0,0.0,NO_DATA,0.0,,1.0,0.0,1.0,,,,,,,,,,0,3,12,0.65,24

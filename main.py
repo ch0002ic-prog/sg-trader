@@ -221,7 +221,19 @@ def _build_parser(config: AppConfig) -> argparse.ArgumentParser:
         default="AJBU.SI:0.0012,DCRU.SI:0.0012",
         help="Comma-separated SYMBOL:value buy-side min projected edge overrides.",
     )
+    parser.add_argument(
+        "--symbol-max-exposure-overrides",
+        type=str,
+        default="",
+        help="Comma-separated SYMBOL:value absolute exposure caps.",
+    )
     parser.add_argument("--risk-aversion", type=float, default=1.0)
+    parser.add_argument(
+        "--buy-exposure-cap",
+        type=float,
+        default=1.0,
+        help="Global max exposure for positive (buy-side) signals.",
+    )
     parser.add_argument(
         "--min-confidence",
         type=float,
@@ -594,6 +606,15 @@ def _select_best_candidate(
             snapshot.target_exposure = float(
                 np.clip(snapshot.target_exposure, -index_max_exposure, index_max_exposure)
             )
+        symbol_max_overrides = getattr(args, "_symbol_max_exposure_overrides", {})
+        if isinstance(symbol_max_overrides, dict):
+            symbol_cap = symbol_max_overrides.get(symbol_key)
+            if symbol_cap is not None and np.isfinite(float(symbol_cap)):
+                cap_abs = max(0.0, float(symbol_cap))
+                snapshot.target_exposure = float(np.clip(snapshot.target_exposure, -cap_abs, cap_abs))
+        buy_cap = max(0.0, float(args.buy_exposure_cap))
+        if snapshot.target_exposure > 0.0:
+            snapshot.target_exposure = float(min(snapshot.target_exposure, buy_cap))
         projected_ratio = 1.0 + snapshot.target_exposure * snapshot.forecast_return
         projected_edge = projected_ratio - 1.0
         min_edge_required = (
@@ -689,6 +710,15 @@ def _score_candidates(
             snapshot.target_exposure = float(
                 np.clip(snapshot.target_exposure, -index_max_exposure, index_max_exposure)
             )
+        symbol_max_overrides = getattr(args, "_symbol_max_exposure_overrides", {})
+        if isinstance(symbol_max_overrides, dict):
+            symbol_cap = symbol_max_overrides.get(symbol_key)
+            if symbol_cap is not None and np.isfinite(float(symbol_cap)):
+                cap_abs = max(0.0, float(symbol_cap))
+                snapshot.target_exposure = float(np.clip(snapshot.target_exposure, -cap_abs, cap_abs))
+        buy_cap = max(0.0, float(args.buy_exposure_cap))
+        if snapshot.target_exposure > 0.0:
+            snapshot.target_exposure = float(min(snapshot.target_exposure, buy_cap))
         if eligible and snapshot.confidence < min_conf_required:
             reason = "low_confidence"
             eligible = 0
@@ -1812,6 +1842,9 @@ def run(argv: list[str] | None = None) -> int:
     )
     args._symbol_min_edge_buy_overrides = _parse_symbol_float_overrides(
         str(args.symbol_min_projected_edge_buy_overrides)
+    )
+    args._symbol_max_exposure_overrides = _parse_symbol_float_overrides(
+        str(args.symbol_max_exposure_overrides)
     )
     active_params = ForecastParams(fast_window=3, slow_window=12, fast_weight=0.65, vol_window=24)
     crypto_fallback_symbols = _parse_symbols(str(args.crypto_fallback_symbols))
